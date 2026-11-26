@@ -1,5 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import gsap from 'gsap';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowUpRight, Check, ChevronDown, Droplets, Edit3, Filter, ImagePlus, Mail, MapPin, Menu, Phone, Plus, Search, Settings2, ShieldCheck, SlidersHorizontal, Trash2, X } from 'lucide-react';
 import { defaultContent, initialProducts } from './data';
 import { articles, solutionPages } from './pages';
@@ -26,34 +25,12 @@ const productDetailModules = import.meta.glob('./product-details/*.json');
 const basePath = import.meta.env.BASE_URL;
 const routeFromLocation = () => location.pathname.startsWith(basePath) ? location.pathname.slice(basePath.length).replace(/\/$/, '') || 'home' : 'home';
 function navigate(path) { history.pushState(null, '', `${basePath}${path}`); dispatchEvent(new PopStateEvent('popstate')); }
+const bundledHeroes = import.meta.glob('./hero-media/*.webp', { eager: true, import: 'default' });
+const editorialMedia = import.meta.glob('./editorial-media/*.webp', { eager: true, import: 'default' });
+const aboutTeamPhoto = editorialMedia['./editorial-media/about-team.webp'];
 const heroMedia = {
-  home: () => import('./hero-media/home.js'),
-  about: () => import('./hero-media/about.js'),
-  journal: () => import('./hero-media/journal.js'),
-  contact: () => import('./hero-media/contact.js'),
-  solutions: () => import('./hero-media/solutions.js'),
-  ro: () => import('./hero-media/ro.js'),
-  products: () => Promise.resolve({ default: basePath + 'editorial/shop.webp' })
-};
-function useHeroMedia(name) {
-  const [image, setImage] = useState('');
-  useEffect(() => { let active = true; setImage(''); heroMedia[name]?.().then(module => { if (active) setImage(module.default); }); return () => { active = false; }; }, [name]);
-  return image;
-}
-const editorialMedia = {
-  ro_home: () => import('./editorial-media/ro_home.js'),
-  ro_industrial: () => import('./editorial-media/ro_industrial.js'),
-  ro_complete: () => import('./editorial-media/ro_complete.js'),
-  blog_uv: () => import('./editorial-media/blog_uv.js'),
-  blog_sand: () => import('./editorial-media/blog_sand.js'),
-  blog_iron: () => import('./editorial-media/blog_iron.js'),
-  blog_drinking: () => import('./editorial-media/blog_drinking.js'),
-  blog_borehole: () => import('./editorial-media/blog_borehole.js'),
-  blog_hardness: () => import('./editorial-media/blog_hardness.js'),
-  blog_dmi: () => import('./editorial-media/blog_dmi.js'),
-  blog_filter: () => import('./editorial-media/blog_filter.js'),
-  blog_softener: () => import('./editorial-media/blog_softener.js'),
-  blog_iron_effects: () => import('./editorial-media/blog_iron_effects.js')
+  ...Object.fromEntries(Object.entries(bundledHeroes).map(([file, url]) => [file.split('/').at(-1).replace('.webp', ''), url])),
+  products: basePath + 'editorial/shop.webp'
 };
 const articleMedia = ['blog_uv','blog_sand','blog_iron','blog_drinking','blog_borehole','blog_hardness','blog_dmi','blog_filter','blog_softener','blog_iron_effects'];
 const additionalGuides = [
@@ -61,22 +38,16 @@ const additionalGuides = [
   { slug: '500lph-ro-system-on-skid', title: '500 LPH RO system on skid', description: 'Explore a packaged reverse osmosis system for commercial treatment.' }
 ];
 function EditorialPhoto({ name, alt = '', className = '' }) {
-  const element = useRef(null);
-  const [src, setSrc] = useState('');
-  useEffect(() => {
-    let mounted = true;
-    const load = () => editorialMedia[name]?.().then(module => { if (mounted) setSrc(module.default); });
-    if (!('IntersectionObserver' in window)) { load(); return () => { mounted = false; }; }
-    const observer = new IntersectionObserver(entries => { if (entries[0]?.isIntersecting) { observer.disconnect(); load(); } }, { rootMargin: '350px' });
-    if (element.current) observer.observe(element.current);
-    return () => { mounted = false; observer.disconnect(); };
-  }, [name]);
-  return <div className={`editorial-photo ${className}`} ref={element}>{src && <img src={src} alt={alt} loading="lazy" decoding="async"/>}</div>;
+  const src = editorialMedia['./editorial-media/' + name + '.webp'];
+  const isHero = className === 'article-hero-photo';
+  return <div className={'editorial-photo ' + className}>
+    {src && <img src={src} alt={alt} loading={isHero ? 'eager' : 'lazy'} decoding="async" fetchPriority={isHero ? 'high' : 'auto'}/>}
+  </div>;
 }
 
 function App() {
   const [page, setPage] = useState(() => { if (location.hash.startsWith('#/')) { const legacy = location.hash.slice(2) || 'home'; history.replaceState(null, '', `${basePath}${legacy}`); } return routeFromLocation(); });
-  const pageHero = useHeroMedia(['home','about','journal','contact','solutions','offers','products'].includes(page) ? page : page === 'ro-range' ? 'ro' : '');
+  const pageHero = heroMedia[page === 'ro-range' ? 'ro' : page];
   const [products, setProducts] = useState(initialProducts);
   const [promotions, setPromotions] = useState([]);
   const [content, setContent] = useState(defaultContent);
@@ -93,12 +64,12 @@ function App() {
   const [catalogueLoading, setCatalogueLoading] = useState(true);
 
   useEffect(() => {
-    const onRoute = () => { setPage(routeFromLocation()); setMobileMenu(false); window.scrollTo(0, 0); };
+    const onRoute = () => { if (location.hash) return; setPage(routeFromLocation()); setMobileMenu(false); window.scrollTo(0, 0); };
     const onInternalLink = event => {
       const anchor = event.target.closest?.('a[href]');
       if (!anchor || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || anchor.target || anchor.hasAttribute('download')) return;
       const destination = new URL(anchor.href, location.href);
-      if (destination.origin !== location.origin || !destination.pathname.startsWith(basePath)) return;
+      if (destination.origin !== location.origin || !destination.pathname.startsWith(basePath) || destination.hash) return;
       event.preventDefault(); navigate(destination.pathname.slice(basePath.length) || 'home');
     };
     addEventListener('popstate', onRoute);
@@ -133,13 +104,6 @@ function App() {
     supabase.from('editors').select('user_id').eq('user_id', user.id).maybeSingle().then(({ data }) => setIsEditor(Boolean(data)));
   }, [user]);
 
-  useEffect(() => {
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const ctx = gsap.context(() => {
-      gsap.fromTo('[data-reveal]', { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.7, stagger: 0.07, ease: 'power2.out', clearProps: 'all' });
-    });
-    return () => ctx.revert();
-  }, [page]);
 
   function flash(message) { setNotice(message); setTimeout(() => setNotice(''), 4500); }
   async function saveContent(changes) {
@@ -208,6 +172,7 @@ function App() {
       </div></div>
     </header>
     {isEditor && <div className="editor-strip"><div className="container"><span><span className="live-dot"/> LIVE EDIT MODE</span><span>Click any pencil to update the page. Changes appear immediately.</span><div><button onClick={() => setModal({ kind: 'product', item: { ...emptyProduct, sort_order: products.length } })}><Plus size={15}/> Product</button><button onClick={() => setModal({ kind: 'promotion', item: { ...emptyPromotion, sort_order: promotions.length } })}><Plus size={15}/> Promotion</button><button onClick={async () => { await supabase.auth.signOut(); flash('Signed out.'); }}>Sign out</button></div></div></div>}
+    <div className="page-content" key={page}>
     {page === 'editor' && <EditorLogin user={user} isEditor={isEditor}/>}
     {page === 'home' && <main>
       <section className="hero" style={pageHero ? { '--hero-photo': `url("${content.hero_image && content.hero_image !== defaultContent.hero_image ? content.hero_image : pageHero}")` } : {}}><div className="container hero-grid"><div className="hero-copy" data-reveal><div className="eyebrow"><span className="eyebrow-line"/>{content.hero_eyebrow}</div><h1>{content.hero_title}</h1><p>{content.hero_description}</p><div className="hero-buttons"><a className="btn btn-blue" href="/Puritech-Botswana-/products">Explore products <ArrowUpRight size={18}/></a><button className="btn btn-outline" onClick={() => setEnquireProduct(null)}>Talk to an expert</button></div><div className="hero-foot"><span><strong>2007</strong> Established in Botswana</span><span className="foot-divider"/><span><strong>Home to industry</strong> Solutions for every scale</span></div>{isEditor && <EditButton onClick={() => edit(['hero_eyebrow','hero_title','hero_description','hero_image'], 'Edit hero')}/>}</div><div className="hero-visual" data-reveal><div className="hero-stamp"><Droplets size={19}/><span>PURE WATER<br/><strong>BETTER FUTURE</strong></span></div></div></div></section>
@@ -231,10 +196,10 @@ function App() {
     {currentSolution && <SolutionDetail page={currentSolution} product={activeProducts.find(p => p.name.toLowerCase().includes(currentSolution.imageSearch.toLowerCase()))} content={content} edit={edit} isEditor={isEditor} onEnquire={() => setEnquireProduct({ name: currentSolution.title })}/>}
     {page === 'journal' && <Journal articles={articles} image={pageHero} content={content} edit={edit} isEditor={isEditor}/>}
     {currentArticle && <ArticleDetail article={currentArticle} content={content} edit={edit} isEditor={isEditor} onEnquire={() => setEnquireProduct(null)}/>}
-    {page === 'about' && <AboutPage image={pageHero} content={content} isEditor={isEditor} edit={edit} onEnquire={() => setEnquireProduct(null)}/>} 
+    {page === 'about' && <AboutPage image={pageHero} content={content} isEditor={isEditor} edit={edit} onEnquire={() => setEnquireProduct(null)}/>}
     {page === 'contact' && <main className="contact-page"><PageBanner image={pageHero} kicker="CONTACT OUR TEAM" title={content.contact_title} description={content.contact_description}/>{isEditor && <div className="container page-edit"><EditButton onClick={() => edit(['contact_title','contact_description','contact_email','contact_phone','contact_phone_secondary','contact_address'], 'Edit contact details')}/></div>}<section className="section contact-section"><div className="container contact-layout"><div><span className="kicker">WE'RE HERE TO HELP</span><h2>Start the conversation.</h2><p>Tell us about the water challenge, the product you have in mind, or the project you are planning.</p><div className="contact-items"><a href={`mailto:${content.contact_email}`}><Mail/><span><small>EMAIL US</small>{content.contact_email}</span></a><a href={`tel:${content.contact_phone.replace(/\s/g,'')}`}><Phone/><span><small>CALL US</small>{content.contact_phone}</span></a><a href={`tel:${(content.contact_phone_secondary || '').replace(/\s/g,'')}`}><Phone/><span><small>ALTERNATIVE NUMBER</small>{content.contact_phone_secondary}</span></a><div><MapPin/><span><small>VISIT US</small>{content.contact_address}</span></div></div><ContactMap address={content.contact_address}/><small className="hours">Monday - Friday &middot; 8:00 AM - 5:00 PM</small></div><EnquiryForm product={null} email={content.contact_email} inline/></div></section></main>}
-    {page === 'about' && <ImportedContent page={importedPages['about-us-2']} content={content} isEditor={isEditor} edit={edit} contentKey="archive_about_body"/>}
     {page === 'contact' && <ImportedContent page={importedPages['contact-us-3']} content={content} isEditor={isEditor} edit={edit} contentKey="archive_contact_body"/>}
+    </div>
     <footer className="footer"><div className="container footer-grid"><div><a className="brand footer-brand" href="/Puritech-Botswana-/home"><img className="brand-logo" src={logoUrl} alt="Puritech Botswana"/></a><p>Water treatment solutions for homes, businesses and industry across Botswana.</p></div><div><strong>Explore</strong><a href="/Puritech-Botswana-/home">Home</a><a href="/Puritech-Botswana-/products">Products</a><a href="/Puritech-Botswana-/solutions">Solutions</a><a href="/Puritech-Botswana-/about">About us</a><a href="/Puritech-Botswana-/journal">Journal</a><a href="/Puritech-Botswana-/contact">Contact</a></div><div><strong>Get in touch</strong><a href={`mailto:${content.contact_email}`}>{content.contact_email}</a><a href={`tel:${content.contact_phone.replace(/\s/g,'')}`}>{content.contact_phone}</a><a href={`tel:${(content.contact_phone_secondary || '').replace(/\s/g, '')}`}>{content.contact_phone_secondary}</a><a href="https://www.facebook.com/sanctityH20/" target="_blank" rel="noopener noreferrer">Facebook</a><span>Gaborone, Botswana</span></div></div><div className="container footer-bottom"><span>&copy; {new Date().getFullYear()} Puritech Botswana. All rights reserved.</span><a href="https://futurifydesigns.com/" target="_blank" rel="noopener noreferrer">Built by Futurify Designs</a></div></footer>
     {notice && <div className="toast" role="status">{notice}</div>}
     {enquireProduct !== undefined && enquireProduct !== null && <div className="modal-backdrop" onMouseDown={() => setEnquireProduct(undefined)}><div className="modal enquiry-modal" onMouseDown={e => e.stopPropagation()}><button className="modal-close" onClick={() => setEnquireProduct(undefined)} aria-label="Close"><X/></button><span className="kicker">REQUEST AN ENQUIRY</span><h2>Let's find the right fit.</h2><EnquiryForm product={enquireProduct} email={content.contact_email}/></div></div>}
@@ -248,17 +213,72 @@ const marqueeBrands = [
   ['Vontron','vontron',vontronLogo], ['Partner logo','emblem',emblemLogo],
   ['PureWater','purewater',purewaterLogo]
 ];
+const aboutBranches = [
+  {
+    title: 'Where we started',
+    branches: [
+      ['Founded in Botswana', 'SANCTITY (Pty) Ltd began operating as Puritech Botswana in 2007.'],
+      ['Based in Gaborone', 'Find our team in the Gaborone International Commerce Park.']
+    ]
+  },
+  {
+    title: 'Who we work with',
+    branches: [
+      ['Homes and small businesses', 'We help you choose filters, cartridges and drinking-water systems for your space and daily use.'],
+      ['Commercial and industrial sites', 'We help specify treatment equipment for the source water, volumes and operating conditions of your site.']
+    ]
+  },
+  {
+    title: 'How we work',
+    branches: [
+      ['Understand the source', 'We ask where your water comes from, what you need it for, and what you already know about its quality.'],
+      ['Choose the equipment', 'We help you match each treatment stage and component to the work it needs to do.'],
+      ['Support it over time', 'We can help with maintenance advice and finding the right replacement parts.']
+    ]
+  }
+];
+
 function AboutPage({ image, content, isEditor, edit, onEnquire }) {
-  const pillars = [
-    ['01', 'Listen to the water', 'We start with your source, quality and intended use before recommending a system.'],
-    ['02', 'Choose with purpose', 'From a replacement cartridge to an industrial plant, each component has a job to do.'],
-    ['03', 'Keep it working', 'Local advice, maintenance and replacement parts help protect the result over time.']
-  ];
-  return <main className="about-page">
-    <PageBanner kicker="ABOUT PURITECH BOTSWANA" title={content.about_title} description="Local knowledge. Serious water expertise." image={image}/>
-    <section className="section about-story"><div className="container about-story-grid"><div className="about-story-image" style={image ? { backgroundImage: `url("${image}")` } : {}}><span>GABORONE / SINCE 2007</span></div><div className="about-story-copy"><span className="kicker">WHO WE ARE</span><h2>Good water takes the right thinking.</h2><p>{content.about_description}</p><p>We work across home, commercial and industrial water treatment, supplying the equipment and guidance to help customers make informed choices.</p>{isEditor && <EditButton onClick={() => edit(['about_title','about_description'], 'Edit about page')}/>}</div></div></section>
-    <section className="section about-principles"><div className="container"><div className="section-heading"><div><span className="kicker">HOW WE WORK</span><h2>From the first question to the final fitting.</h2></div></div><div className="about-pillar-grid">{pillars.map(([number, title, detail]) => <div className="about-pillar" key={number} data-reveal><span>{number}</span><h3>{title}</h3><p>{detail}</p></div>)}</div></div></section>
-    <section className="about-next"><div className="container"><div><span className="kicker">LET'S TALK WATER</span><h2>Tell us what you need your water to do.</h2></div><button className="btn btn-white" onClick={onEnquire}>Start an enquiry <ArrowUpRight size={17}/></button></div></section>
+  return <main className="about-page about-redesign">
+    <section className="about-hero">
+      <img className="about-hero-photo" src={image} alt="" fetchPriority="high" width="1440" height="600"/>
+      <div className="container about-hero-copy">
+        <span className="kicker">ABOUT PURITECH BOTSWANA</span>
+        <h1>{content.about_title}</h1>
+        <a className="btn btn-white" href="#our-story">Explore our story <ChevronDown size={17}/></a>
+      </div>
+    </section>
+
+    <section className="section container about-tree-layout" id="our-story">
+      <div className="about-tree-intro">
+        <h2>Our story and how we work</h2>
+        <p>{content.about_description}</p>
+        {isEditor && <EditButton onClick={() => edit(['about_title', 'about_description'], 'Edit about page')}/>}
+        <img src={aboutTeamPhoto} alt="Illustration of water treatment technicians checking a water sample" width="900" height="675" loading="lazy" decoding="async"/>
+      </div>
+      <div className="about-tree">
+        {aboutBranches.map(({ title, branches }, index) => <details className="about-branch" key={title} open={index === 0}>
+          <summary>{title}<ChevronDown size={19} aria-hidden="true"/></summary>
+          <div className="about-twigs">
+            {branches.map(([label, text]) => <details key={label}>
+              <summary>{label}<ChevronDown size={16} aria-hidden="true"/></summary>
+              <p>{text}</p>
+            </details>)}
+          </div>
+        </details>)}
+        {importedPages['about-us-2']?.html && <details className="about-branch">
+          <summary>Full company profile<ChevronDown size={19} aria-hidden="true"/></summary>
+          <ImportedContent page={importedPages['about-us-2']} content={content} isEditor={isEditor} edit={edit} contentKey="archive_about_body"/>
+        </details>}
+      </div>
+    </section>
+
+    <section className="about-next">
+      <div className="container">
+        <h2>Tell us what you need your water to do.</h2>
+        <button className="btn btn-white" onClick={onEnquire}>Start an enquiry <ArrowUpRight size={17}/></button>
+      </div>
+    </section>
   </main>;
 }
 function BrandMarquee({ content, isEditor, edit }) {
