@@ -3,9 +3,11 @@ import gsap from 'gsap';
 import { ArrowUpRight, Check, ChevronDown, Droplets, Edit3, Filter, ImagePlus, Mail, MapPin, Menu, Phone, Plus, Search, Settings2, ShieldCheck, SlidersHorizontal, Trash2, X } from 'lucide-react';
 import { defaultContent, initialProducts } from './data';
 import { articles, solutionPages } from './pages';
+import importedPages from './imported-pages.json';
+import mediaManifest from './media-manifest.json';
 import { supabase, uploadImage } from './supabase';
+import { logoUrl } from './logo';
 
-const logoUrl = 'https://water.co.bw/wp-content/uploads/2026/05/Puritech-logo-final-2-1.png';
 const emptyProduct = { name: '', category: 'RO Home Use', description: '', image_url: '', source_url: '', featured: false, active: true, sort_order: 0 };
 const emptyPromotion = { title: '', subtitle: '', image_url: '', cta_label: 'Enquire now', active: true, sort_order: 0 };
 
@@ -24,6 +26,7 @@ function App() {
   const [mobileMenu, setMobileMenu] = useState(false);
   const [notice, setNotice] = useState('');
   const [cmsReady, setCmsReady] = useState(true);
+  const [catalogueLoading, setCatalogueLoading] = useState(true);
 
   useEffect(() => {
     const onHash = () => { setPage(location.hash.replace('#/', '') || 'home'); setMobileMenu(false); window.scrollTo(0, 0); };
@@ -42,6 +45,7 @@ function App() {
         supabase.from('site_content').select('key,value'),
       ]);
       if (cancelled) return;
+      setCatalogueLoading(false);
       if (p.error || o.error || c.error) { setCmsReady(false); return; }
       setCmsReady(true);
       if (p.data?.length) setProducts(p.data);
@@ -113,6 +117,7 @@ function App() {
   const productActions = item => isEditor && <div className="card-edit"><button aria-label={`Edit ${item.name}`} onClick={e => { e.stopPropagation(); setModal({ kind: 'product', item }); }}><Edit3 size={15}/></button><button aria-label={`Delete ${item.name}`} onClick={e => { e.stopPropagation(); remove('product', item); }}><Trash2 size={15}/></button></div>;
   const currentSolution = solutionPages.find(item => item.slug === page);
   const currentArticle = articles.find(item => page === `journal/${item.slug}`);
+  const currentProduct = page.startsWith('product/') ? activeProducts.find(item => String(item.id) === page.slice(8)) : null;
 
   return <>
     <div className="topline"><div className="container top-inner"><span>Water treatment expertise since 2007</span><span><a href={`tel:${content.contact_phone.replace(/\s/g, '')}`}>{content.contact_phone}</a><i/> <a href={`mailto:${content.contact_email}`}>{content.contact_email}</a></span></div></div>
@@ -134,12 +139,15 @@ function App() {
       <section className="editorial"><div className="container editorial-inner"><div><span className="kicker">MORE THAN EQUIPMENT</span><h2>Water problems are different.<br/><em>So are the solutions.</em></h2><p>Whether you're planning a household installation or a large treatment project, we can help you work out what fits.</p><button className="btn btn-white" onClick={() => setEnquireProduct(null)}>Tell us what you need <ArrowUpRight size={17}/></button></div><div className="editorial-art"><div className="art-ring"/><Droplets size={120} strokeWidth={1}/></div></div></section>
     </main>}
     {page === 'products' && <main><PageBanner kicker="THE PRODUCT RANGE" title={content.products_title || "Find your water solution."} description={content.products_description || "Explore our full equipment range. Need guidance? Send an enquiry and our team will help."}/>{isEditor && <div className="container page-edit"><EditButton onClick={() => edit(["products_title","products_description"], "Edit products introduction", { products_title: "Find your water solution.", products_description: "Explore our full equipment range. Need guidance? Send an enquiry and our team will help." })}/></div>}<section className="section catalogue"><div className="container"><div className="catalogue-tools"><label className="search-box"><Search size={19}/><input placeholder="Search products" value={search} onChange={e => { setSearch(e.target.value); setVisibleCount(24); }}/></label><label className="select-wrap"><SlidersHorizontal size={18}/><select value={category} onChange={e => { setCategory(e.target.value); setVisibleCount(24); }}>{categories.map(c => <option key={c}>{c}</option>)}</select><ChevronDown size={16}/></label><span className="result-count">{filtered.length} {filtered.length === 1 ? 'product' : 'products'}</span></div><div className="catalogue-layout"><aside className="category-sidebar"><span className="kicker">CATEGORIES</span>{categories.map(c => <button key={c} className={category === c ? 'selected' : ''} onClick={() => { setCategory(c); setVisibleCount(24); }}>{c}<span>{c === 'All products' ? activeProducts.length : activeProducts.filter(p => p.category === c).length}</span></button>)}</aside><div>{filtered.length ? <div className="product-grid catalogue-grid">{filtered.slice(0, visibleCount).map(p => <ProductCard key={p.id} product={p} onEnquire={setEnquireProduct} actions={productActions(p)}/>)}</div> : <div className="empty-state">No products match that search. Try a different category or <button onClick={() => {setSearch('');setCategory('All products');}}>clear filters</button>.</div>}{filtered.length > visibleCount && <div className="load-more"><button className="btn btn-outline-dark" onClick={() => setVisibleCount(count => count + 24)}>Show more products</button><span>Showing {Math.min(visibleCount, filtered.length)} of {filtered.length}</span></div>}</div></div></div></section></main>}
+    {page.startsWith('product/') && (currentProduct ? <ProductDetail product={currentProduct} related={activeProducts.filter(item => item.id !== currentProduct.id && item.category === currentProduct.category).slice(0, 3)} onEnquire={setEnquireProduct} actions={productActions(currentProduct)}/> : <main className="product-detail missing-product"><div className="container"><a href="#/products" className="back-link">Back to products</a><h1>{catalogueLoading ? 'Loading product...' : 'Product unavailable'}</h1>{!catalogueLoading && <p>This item may have been removed. Browse the current catalogue to find an alternative.</p>}</div></main>)}
     {page === 'solutions' && <SolutionsHub pages={solutionPages} content={content} edit={edit} isEditor={isEditor} onEnquire={() => setEnquireProduct(null)}/>}
     {currentSolution && <SolutionDetail page={currentSolution} product={activeProducts.find(p => p.name.toLowerCase().includes(currentSolution.imageSearch.toLowerCase()))} content={content} edit={edit} isEditor={isEditor} onEnquire={() => setEnquireProduct({ name: currentSolution.title, source_url: currentSolution.source })}/>}
     {page === 'journal' && <Journal articles={articles} content={content} edit={edit} isEditor={isEditor}/>}
     {currentArticle && <ArticleDetail article={currentArticle} content={content} edit={edit} isEditor={isEditor} onEnquire={() => setEnquireProduct(null)}/>}
     {page === 'about' && <main className="about-page"><PageBanner kicker="ABOUT PURITECH BOTSWANA" title={content.about_title} description="Local knowledge. Serious water expertise."/>{isEditor && <div className="container page-edit"><EditButton onClick={() => edit(['about_title','about_description'], 'Edit about page')}/></div>}<section className="section about-layout"><div className="container"><div className="about-copy"><span className="kicker">OUR STORY</span><h2>Since 2007, working toward better water.</h2><p>{content.about_description}</p><p>We supply replacement filters, reverse osmosis membranes, housings, FRP vessels, filtration media, domestic systems and industrial equipment.</p><button className="btn btn-blue" onClick={() => setEnquireProduct(null)}>Discuss your project <ArrowUpRight size={17}/></button></div><div className="about-panel"><span>01 / BOTSWANA</span><Droplets size={90} strokeWidth={1.1}/><h3>Practical expertise.<br/>Clearer outcomes.</h3><p>From a glass of water at home to high-volume treatment systems.</p></div></div></section></main>}
     {page === 'contact' && <main className="contact-page"><PageBanner kicker="CONTACT OUR TEAM" title={content.contact_title} description={content.contact_description}/>{isEditor && <div className="container page-edit"><EditButton onClick={() => edit(['contact_title','contact_description','contact_email','contact_phone','contact_address'], 'Edit contact details')}/></div>}<section className="section contact-section"><div className="container contact-layout"><div><span className="kicker">WE'RE HERE TO HELP</span><h2>Start the conversation.</h2><p>Tell us about the water challenge, the product you have in mind, or the project you are planning.</p><div className="contact-items"><a href={`mailto:${content.contact_email}`}><Mail/><span><small>EMAIL US</small>{content.contact_email}</span></a><a href={`tel:${content.contact_phone.replace(/\s/g,'')}`}><Phone/><span><small>CALL US</small>{content.contact_phone}</span></a><div><MapPin/><span><small>VISIT US</small>{content.contact_address}</span></div></div><small className="hours">Monday - Friday &middot; 8:00 AM - 5:00 PM</small></div><EnquiryForm product={null} email={content.contact_email} inline/></div></section></main>}
+    {page === 'about' && <ImportedContent page={importedPages['about-us-2']}/>}
+    {page === 'contact' && <ImportedContent page={importedPages['contact-us-3']}/>}
     <footer className="footer"><div className="container footer-grid"><div><a className="brand footer-brand" href="#/home"><img className="brand-logo" src={logoUrl} alt="Puritech Botswana"/></a><p>Water treatment solutions for homes, businesses and industry across Botswana.</p></div><div><strong>Explore</strong><a href="#/home">Home</a><a href="#/products">Products</a><a href="#/solutions">Solutions</a><a href="#/about">About us</a><a href="#/journal">Journal</a><a href="#/contact">Contact</a></div><div><strong>Get in touch</strong><a href={`mailto:${content.contact_email}`}>{content.contact_email}</a><a href={`tel:${content.contact_phone.replace(/\s/g,'')}`}>{content.contact_phone}</a><span>Gaborone, Botswana</span></div></div><div className="container footer-bottom"><span>&copy; {new Date().getFullYear()} Puritech Botswana. All rights reserved.</span><a href="https://futurifydesigns.com/" target="_blank" rel="noopener noreferrer">Built by Futurify Designs</a></div></footer>
     {notice && <div className="toast" role="status">{notice}</div>}
     {enquireProduct !== undefined && enquireProduct !== null && <div className="modal-backdrop" onMouseDown={() => setEnquireProduct(undefined)}><div className="modal enquiry-modal" onMouseDown={e => e.stopPropagation()}><button className="modal-close" onClick={() => setEnquireProduct(undefined)} aria-label="Close"><X/></button><span className="kicker">REQUEST AN ENQUIRY</span><h2>Let's find the right fit.</h2><EnquiryForm product={enquireProduct} email={content.contact_email}/></div></div>}
@@ -165,6 +173,7 @@ function SolutionDetail({ page, product, content, edit, isEditor, onEnquire }) {
     <section className="solution-insight"><div className="container"><span className="kicker">THE STARTING POINT</span><p>{page.insight}</p></div></section>
     <section className="section solution-process"><div className="container"><div className="solution-section-heading"><span className="kicker">HOW IT COMES TOGETHER</span><h2>A clear path forward.</h2></div><div className="process-grid">{page.steps.map(([number, heading, description]) => <div className="process-card" key={number} data-reveal><span>{number}</span><h3>{heading}</h3><p>{description}</p></div>)}</div></div></section>
     <section className="section solution-equipment"><div className="container equipment-layout"><div><span className="kicker">PART OF THE PLAN</span><h2>Equipment to consider.</h2><p>{page.note}</p><button className="btn btn-blue" onClick={onEnquire}>Plan with Puritech <ArrowUpRight size={17}/></button></div><ul>{page.equipment.map(item => <li key={item}><Check size={18}/>{item}</li>)}</ul></div></section>
+    <ImportedContent page={importedPages[page.slug]}/>
     <section className="solution-next"><div className="container"><div><span className="kicker">KEEP EXPLORING</span><h2>Find the right fit for your water.</h2></div><div><a href="#/products">Browse the product range <ArrowUpRight size={17}/></a><a href={page.source} target="_blank" rel="noopener noreferrer">Original technical page <ArrowUpRight size={17}/></a></div></div></section>
   </main>;
 }
@@ -178,26 +187,49 @@ function ArticleDetail({ article, content, edit, isEditor, onEnquire }) {
   const title = content[`${key}_title`] || article.title;
   const teaser = content[`${key}_teaser`] || article.teaser;
   const overview = content[`${key}_body`] || `${article.teaser} Water quality and treatment needs vary by source and intended use. A water analysis and a conversation about your application are the best starting points for selecting equipment.`;
-  return <main className="article-detail"><section className="article-cover"><div className="container"><a href="#/journal" className="back-link">Journal / <span>{article.category}</span></a><span className="kicker" data-reveal>FROM THE PURITECH ARCHIVE</span><h1 data-reveal>{title}</h1><p data-reveal>{teaser}</p>{isEditor && <EditButton onClick={() => edit([`${key}_title`,`${key}_teaser`,`${key}_body`], `Edit ${article.title}`, { [`${key}_title`]: title, [`${key}_teaser`]: teaser, [`${key}_body`]: overview })}/>}</div></section><section className="section article-body"><div className="container"><div><span className="kicker">THE OVERVIEW</span><h2>What this topic means for your water.</h2></div><div><p>{overview}</p><p>Read the original article for its full explanation, then speak to our team about how the topic applies to your situation.</p><div className="article-actions"><a className="btn btn-outline-dark" href={article.source} target="_blank" rel="noopener noreferrer">Read the original article <ArrowUpRight size={17}/></a><button className="btn btn-blue" onClick={onEnquire}>Ask our team <ArrowUpRight size={17}/></button></div></div></div></section></main>;
+  return <main className="article-detail"><section className="article-cover"><div className="container"><a href="#/journal" className="back-link">Journal / <span>{article.category}</span></a><span className="kicker" data-reveal>FROM THE PURITECH ARCHIVE</span><h1 data-reveal>{title}</h1><p data-reveal>{teaser}</p>{isEditor && <EditButton onClick={() => edit([`${key}_title`,`${key}_teaser`,`${key}_body`], `Edit ${article.title}`, { [`${key}_title`]: title, [`${key}_teaser`]: teaser, [`${key}_body`]: overview })}/>}</div></section>{importedPages[article.slug]?.html ? <ImportedContent page={importedPages[article.slug]}/> : <section className="section article-body"><div className="container"><div><span className="kicker">THE OVERVIEW</span><h2>What this topic means for your water.</h2></div><div><p>{overview}</p><p>Read the original article for its full explanation, then speak to our team about how the topic applies to your situation.</p><div className="article-actions"><a className="btn btn-outline-dark" href={article.source} target="_blank" rel="noopener noreferrer">Read the original article <ArrowUpRight size={17}/></a><button className="btn btn-blue" onClick={onEnquire}>Ask our team <ArrowUpRight size={17}/></button></div></div></div></section>}</main>;
+}
+
+function ImportedContent({ page }) {
+  if (!page?.html) return null;
+  return <section className="section imported-section"><div className="container"><div className="imported-heading"><span className="kicker">FROM THE PURITECH ARCHIVE</span><h2>The full guide.</h2></div><div className="imported-content" dangerouslySetInnerHTML={{ __html: page.html }}/></div></section>;
 }
 
 function EditButton({ onClick }) { return <button className="edit-button" onClick={onClick} aria-label="Edit section"><Edit3 size={15}/> Edit section</button>; }
 function PageBanner({ kicker, title, description }) { return <div className="page-banner"><div className="container"><span className="kicker">{kicker}</span><h1>{title}</h1><p>{description}</p></div><div className="banner-mark"><Droplets size={260} strokeWidth={.7}/></div></div>; }
 function ProductCard({ product, onEnquire, actions }) {
   return <article className="product-card" data-reveal>
-    <div className="product-image">{product.image_url && <img src={product.image_url} alt={product.name} loading="lazy" onLoad={e => { e.currentTarget.hidden = false; e.currentTarget.parentNode.classList.remove('no-image'); }} onError={e => {
+    <ProductImage product={product} actions={actions}/>
+    <div className="product-info"><span className="product-category">{product.category}</span><h3><a href={`#/product/${product.id}`}>{product.name}</a></h3><p>{product.description}</p><div className="product-card-links"><a href={`#/product/${product.id}`}>View details</a><button onClick={() => onEnquire(product)}>Enquire <ArrowUpRight size={17}/></button></div></div>
+  </article>;
+}
+function ProductImage({ product, actions, eager = false }) {
+  const mirrored = mediaManifest[product.id];
+  return <div className="product-image">{product.image_url && <img src={mirrored ? `${import.meta.env.BASE_URL}${mirrored}` : product.image_url} alt={product.name} loading={eager ? 'eager' : 'lazy'} decoding="async" fetchPriority={eager ? 'high' : 'auto'} onLoad={e => { e.currentTarget.hidden = false; e.currentTarget.parentNode.classList.remove('no-image'); }} onError={e => {
       const image = e.currentTarget;
       image.hidden = true;
       image.parentNode.classList.add('no-image');
+      if (mirrored && !image.dataset.sourceFallback) {
+        image.dataset.sourceFallback = '1';
+        image.src = product.image_url;
+        return;
+      }
       if (image.dataset.retried) return;
       image.dataset.retried = '1';
       setTimeout(() => {
         if (!image.isConnected) return;
         image.src = `${product.image_url}${product.image_url.includes('?') ? '&' : '?'}retry=1`;
       }, 12000);
-    }}/>}<Droplets className="product-placeholder" size={75} strokeWidth={1}/>{actions}</div>
-    <div className="product-info"><span className="product-category">{product.category}</span><h3>{product.name}</h3><p>{product.description}</p><button onClick={() => onEnquire(product)}>Enquire about this <ArrowUpRight size={17}/></button></div>
-  </article>;
+    }}/>}<Droplets className="product-placeholder" size={75} strokeWidth={1}/>{actions}</div>;
+}
+function ProductDetail({ product, related, onEnquire, actions }) {
+  const description = product.description?.trim();
+  return <main className="product-detail">
+    <div className="container product-breadcrumb"><a href="#/products">Products</a><span>/</span><span>{product.category}</span></div>
+    <section className="container detail-layout"><div className="detail-visual" data-reveal><ProductImage product={product} actions={actions} eager/></div><div className="detail-copy" data-reveal><span className="kicker">{product.category}</span><h1>{product.name}</h1><p className="detail-intro">Explore this product and tell us what you need. Our team can confirm specifications, availability and the best fit for your project.</p><div className="detail-facts"><span><Check size={18}/> Product enquiry</span><span><Check size={18}/> Botswana support</span></div><button className="btn btn-blue" onClick={() => onEnquire(product)}>Enquire about this product <ArrowUpRight size={17}/></button></div></section>
+    <section className="section detail-description"><div className="container detail-description-grid"><div><span className="kicker">PRODUCT INFORMATION</span><h2>About this product.</h2></div><div>{description ? description.split(/\n{2,}/).map((paragraph, index) => <p key={index}>{paragraph}</p>) : <p>Contact our team for this product's specifications and suitability for your water treatment needs.</p>}{product.source_url && <a className="under-link" href={product.source_url} target="_blank" rel="noopener noreferrer">Original product information <ArrowUpRight size={16}/></a>}</div></div></section>
+    {related.length > 0 && <section className="section related-products"><div className="container"><div className="section-heading"><div><span className="kicker">KEEP EXPLORING</span><h2>More in {product.category}.</h2></div><a href="#/products" className="under-link">All products <ArrowUpRight size={16}/></a></div><div className="product-grid">{related.map(item => <ProductCard key={item.id} product={item} onEnquire={onEnquire}/>)}</div></div></section>}
+  </main>;
 }
 function EnquiryForm({ product, email, inline = false }) {
   const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' });
