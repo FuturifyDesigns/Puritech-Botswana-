@@ -50,19 +50,22 @@ async function mirror(url, destination) {
   } catch (error) { console.log(`Image unavailable: ${url} ${error.message}`); return null; }
 }
 
-const imported = {};
+const imported = JSON.parse(await fs.readFile('src/imported-pages.json', 'utf8'));
 const extraPages = [
   { slug: 'about-us-2', title: 'About us', source: 'https://water.co.bw/about-us-2/' },
   { slug: 'contact-us-3', title: 'Contact us', source: 'https://water.co.bw/contact-us-3/' }
 ];
 for (const page of [...solutionPages, ...articles, ...extraPages]) {
+  try {
   const response = await get(page.source, 2);
   if (!response) continue;
   const $ = cheerio.load(await response.text());
-  $('script,style,form,nav,aside,.woocommerce,.cart,.price,.related,.comments-area,.sharedaddy,.post-navigation').remove();
+  $('script,style,form,nav,aside,header,footer,.woocommerce,.cart,.price,.related,.comments-area,.sharedaddy,.post-navigation,#masthead,#colophon').remove();
   let root = $('.entry-content').first();
+  if (root.text().trim().length < 80) root = $('.elementor').first();
+  if (root.text().trim().length < 80) root = $('article').first();
   if (root.text().trim().length < 80) root = $('main').first();
-  if (root.text().trim().length < 80) continue;
+  if (root.text().trim().length < 80) { console.log(`No usable body for ${page.slug}`); continue; }
   let index = 0;
   for (const element of root.find('img').toArray()) {
     const image = $(element);
@@ -87,16 +90,20 @@ for (const page of [...solutionPages, ...articles, ...extraPages]) {
     allowedClasses: { div: ['wp-block-*','elementor-widget-container'], span: [] }
   });
   imported[page.slug] = { title: page.title, source: page.source, html };
+  await fs.writeFile('src/imported-pages.json', JSON.stringify(imported, null, 2) + '\n');
   console.log(`Imported ${page.slug}: ${html.length} characters`);
+  } catch (error) { console.log(`Skipped ${page.slug}: ${error.message}`); }
 }
-if (Object.keys(imported).length) await fs.writeFile('src/imported-pages.json', JSON.stringify(imported, null, 2) + '\n');
 
 const key = process.env.SUPABASE_PUBLISHABLE_KEY;
 if (!key) throw new Error('Missing public Supabase publishable key');
 const query = 'https://azvpkkxbtnbbgpyvzbuw.supabase.co/rest/v1/products?select=id,image_url&active=eq.true&limit=1000';
-const productResponse = await fetch(query, { headers: { apikey: key }, signal: AbortSignal.timeout(20000) });
-if (!productResponse.ok) throw new Error(`Catalogue request failed: ${productResponse.status}`);
-const products = await productResponse.json();
+let products = [];
+try {
+  const productResponse = await fetch(query, { headers: { apikey: key }, signal: AbortSignal.timeout(25000) });
+  if (!productResponse.ok) throw new Error(`Catalogue request failed: ${productResponse.status}`);
+  products = await productResponse.json();
+} catch (error) { console.log(`Catalogue request skipped: ${error.message}`); }
 const manifest = JSON.parse(await fs.readFile('src/media-manifest.json', 'utf8'));
 let mirrored = 0;
 for (const product of products) {
