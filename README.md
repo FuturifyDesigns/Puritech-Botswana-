@@ -24,14 +24,14 @@ The website falls back to selected source products and page copy while the CMS t
 
 On 26 November 2026, **499 products** from all 34 public shop pages were imported into Supabase with distinct original product URLs and image URLs. The 16 preliminary CMS entries were archived, leaving exactly 499 active products. The catalogue reads from Supabase and shows 24 cards at a time, with search and categories derived from current product data.
 
-The public listing supplies a short excerpt for each item, not the full WooCommerce product record. Import the WooCommerce CSV later to reconcile long descriptions, variations, and other metadata. The image URLs currently point to the original WordPress media files; unavailable images show a branded placeholder. Upload those files to Supabase Storage if the old site will be retired. `src/data.js` remains a small offline fallback if Supabase is unavailable.
+Each product has an internal detail route with the available description, related products and an enquiry action. The public listing supplies a short excerpt for each item, not the full WooCommerce product record. Import the WooCommerce CSV to reconcile long descriptions, variations, and other metadata. The media mirroring workflow stores optimized copies of available source images under `public/product-images` and lists them in `src/media-manifest.json`; unavailable images fall back to their original URL and then a placeholder. `src/data.js` remains a small offline fallback if Supabase is unavailable.
 ## Publishing
 
 The `.github/workflows/pages.yml` action builds `dist` on each push to `main` and deploys via GitHub Pages. In repository settings, set **Pages  Build and deployment  Source** to **GitHub Actions**. Then rerun the workflow if the first deployment happened before that setting was enabled. The Vite base path is set to `/Puritech-Botswana-/`.
 
 ## Content and enquiry behavior
 
-Home, Products, eight Solutions pages, About, Journal, and Contact use hash routes so direct navigation works on GitHub Pages. The Solutions and Journal copy is a concise editorial summary with links to the original technical pages. Public contact details and company history were sourced from water.co.bw. Promotions are uploaded and managed in the live editor. Enquiry messages go to `info@water.co.bw` through `mailto:`. A mail application must be installed or configured on the visitor's device; this flow does not provide server-confirmed delivery.
+Home, Products, product details, eight Solutions pages, About, Journal, and Contact use hash routes so direct navigation works on GitHub Pages. The solution and article introductions are editorial summaries. `scripts/import-source.mjs` can import the original full page body and images into `src/imported-pages.json` and `public/source-media` when water.co.bw responds. The dedicated GitHub workflow runs on its first push or manually; it also mirrors product images. Public contact details and company history were sourced from water.co.bw. Promotions are uploaded and managed in the live editor. Enquiry messages go to `info@water.co.bw` through `mailto:`. A mail application must be installed or configured on the visitor's device; this flow does not provide server-confirmed delivery.
 
 ## Security limits
 
