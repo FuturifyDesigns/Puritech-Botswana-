@@ -504,6 +504,42 @@ function ProductImage({ product, actions, eager = false, imageOverride }) {
   const sources = productSources(product, imageOverride);
   return <div className="product-image"><CataloguePhoto key={sources.join('|')} sources={sources} alt={product.name} eager={eager}/>{actions}</div>;
 }
+function ProductGallery({ product, images, actions }) {
+  const [index, setIndex] = useState(0);
+  const [playing, setPlaying] = useState(() => !matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const [hovered, setHovered] = useState(false);
+  const count = images.length;
+  const current = index % (count || 1);
+
+  useEffect(() => {
+    if (!playing || hovered || count < 2) return;
+    const timer = setInterval(() => {
+      if (!document.hidden) setIndex(previous => (previous + 1) % count);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [count, hovered, playing]);
+
+  function select(next) {
+    setPlaying(false);
+    setIndex(next);
+  }
+
+  return <div className="detail-visual" data-reveal onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
+    <ProductImage product={product} actions={actions} imageOverride={count > 1 && current > 0 ? images[current] : undefined} eager/>
+    {count > 1 && <div className="product-gallery-controls" role="group" aria-label="Product photos">
+      <div className="product-gallery-toolbar">
+        <span>Photo {current + 1} of {count}</span>
+        <button type="button" onClick={() => setPlaying(value => !value)}>{playing ? 'Pause slideshow' : 'Play slideshow'}</button>
+      </div>
+      <div className="detail-thumbnails">
+        {images.map((url, position) => <button type="button" key={url} className={position === current ? 'selected' : ''} onClick={() => select(position)} aria-pressed={position === current} aria-label={'View product photo ' + (position + 1)}>
+          <CataloguePhoto sources={productSources(product, position === 0 ? undefined : url)} alt=""/>
+        </button>)}
+      </div>
+    </div>}
+  </div>;
+}
+
 function ProductDetail({ product, related, onEnquire, actions, content, isEditor, edit }) {
   const description = readableSourceText(product.description || "").trim();
   const [fullState, setFullState] = useState(null);
@@ -513,11 +549,9 @@ function ProductDetail({ product, related, onEnquire, actions, content, isEditor
   const detailKey = `product_detail_${product.id.replaceAll('-', '_')}`;
   const liveDetail = content[detailKey];
   const gallery = [...new Set(full?.images?.filter(Boolean) || [])];
-  const [selectedImage, setSelectedImage] = useState(null);
-  useEffect(() => setSelectedImage(null), [product.id]);
   return <main className="product-detail">
     <div className="container product-breadcrumb"><a href="/Puritech-Botswana-/products">Products</a><span>/</span><span>{product.category}</span></div>
-    <section className="container detail-layout"><div className="detail-visual" data-reveal><ProductImage product={product} actions={actions} imageOverride={selectedImage} eager/>{gallery.length > 1 && <div className="detail-thumbnails">{gallery.slice(0, 8).map((url, index) => <button type="button" key={url} className={(selectedImage || gallery[0]) === url ? 'selected' : ''} onClick={() => setSelectedImage(url)} aria-label={`View product image ${index + 1}`}><CataloguePhoto sources={productSources(product, url)} alt=""/></button>)}</div>}</div><div className="detail-copy" data-reveal><span className="kicker">{product.category}</span><h1>{readableSourceText(product.name)}</h1>{description && <p className="detail-intro">{description}</p>}{full?.sku && <p className="product-sku">Reference: {readableSourceText(full.sku)}</p>}<div className="detail-facts"><span><Check size={18}/> Product enquiry</span><span><Check size={18}/> Botswana support</span></div><button className="btn btn-blue" onClick={() => onEnquire(product)}>Enquire about this product <ArrowUpRight size={17}/></button></div></section>
+    <section className="container detail-layout"><ProductGallery key={product.id} product={product} images={gallery} actions={actions}/><div className="detail-copy" data-reveal><span className="kicker">{product.category}</span><h1>{readableSourceText(product.name)}</h1>{description && <p className="detail-intro">{description}</p>}{full?.sku && <p className="product-sku">Reference: {readableSourceText(full.sku)}</p>}<div className="detail-facts"><span><Check size={18}/> Product enquiry</span><span><Check size={18}/> Botswana support</span></div><button className="btn btn-blue" onClick={() => onEnquire(product)}>Enquire about this product <ArrowUpRight size={17}/></button></div></section>
     <section className="section detail-description"><div className="container detail-description-grid"><div><span className="kicker">PRODUCT INFORMATION</span><h2>Product details</h2>{isEditor && <EditButton onClick={() => edit([detailKey], `Edit details for ${product.name}`, { [detailKey]: full?.html?.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || description || '' })}/>}</div><div className="product-description-panel">{liveDetail ? <div className="imported-content">{liveDetail.split(/\n{2,}/).map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div> : full?.html ? <div className="imported-content" dangerouslySetInnerHTML={{ __html: readableSourceText(full.html) }}/> : description ? description.split(/\n{2,}/).map((paragraph, index) => <p key={index}>{paragraph}</p>) : <p>Contact our team for this product's specifications and suitability for your water treatment needs.</p>}{full?.attributes?.length > 0 && <dl className="detail-attributes">{full.attributes.map(([label, values]) => <div key={label}><dt>{readableSourceText(label)}</dt><dd>{readableSourceText(values)}</dd></div>)}</dl>}</div></div></section>
     {related.length > 0 && <section className="section related-products"><div className="container"><div className="section-heading"><div><span className="kicker">KEEP EXPLORING</span><h2>More in {product.category}.</h2></div><a href="/Puritech-Botswana-/products" className="under-link">All products <ArrowUpRight size={16}/></a></div><div className="product-grid">{related.map(item => <ProductCard key={item.id} product={item} onEnquire={onEnquire}/>)}</div></div></section>}
   </main>;

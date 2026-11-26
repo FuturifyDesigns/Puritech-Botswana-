@@ -408,3 +408,6 @@
 .status-page h1 { margin: 12px 0; font: 800 clamp(32px, 5vw, 60px)/1.1 Manrope, sans-serif; letter-spacing: -.045em; }
 .status-page p { color: #3b5869; max-width: 48ch; line-height: 1.6; }
 .status-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 25px; }
+
+.product-gallery-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-top: 12px; color: #31586c; font-size: .875rem; }
+.product-gallery-toolbar button { background: #fff; border: 1px solid #c7dce5; border-radius: 6px; color: #075d83; padding: 8px 12px; font-weight: 700; }
