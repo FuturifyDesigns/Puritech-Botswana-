@@ -45,7 +45,7 @@ export const solutionPages = [
   {
     slug: 'water-bar', title: 'Water bar', eyebrow: 'A SMALLER WAY TO START',
     lead: 'Create a convenient place to dispense purified water for customers, staff or a refill business.',
-    theme: 'bar', imageSearch: 'Water Bar', source: 'https://water.co.bw/water-bar/',
+    theme: 'bar', imageSearch: 'Dispenser', source: 'https://water.co.bw/water-bar/',
     insight: 'A water bar combines a reverse osmosis system with a tank and tap for accessible purified water.',
     steps: [
       ['01', 'Choose the setting', 'Consider a shop, garage, supermarket or shared workplace area.'],
