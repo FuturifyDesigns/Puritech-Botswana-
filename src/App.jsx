@@ -185,7 +185,17 @@ function EditButton({ onClick }) { return <button className="edit-button" onClic
 function PageBanner({ kicker, title, description }) { return <div className="page-banner"><div className="container"><span className="kicker">{kicker}</span><h1>{title}</h1><p>{description}</p></div><div className="banner-mark"><Droplets size={260} strokeWidth={.7}/></div></div>; }
 function ProductCard({ product, onEnquire, actions }) {
   return <article className="product-card" data-reveal>
-    <div className="product-image">{product.image_url && <img src={product.image_url} alt={product.name} loading="lazy" onError={e => { e.currentTarget.hidden = true; e.currentTarget.parentNode.classList.add('no-image'); }}/>}<Droplets className="product-placeholder" size={75} strokeWidth={1}/>{actions}</div>
+    <div className="product-image">{product.image_url && <img src={product.image_url} alt={product.name} loading="lazy" onLoad={e => { e.currentTarget.hidden = false; e.currentTarget.parentNode.classList.remove('no-image'); }} onError={e => {
+      const image = e.currentTarget;
+      image.hidden = true;
+      image.parentNode.classList.add('no-image');
+      if (image.dataset.retried) return;
+      image.dataset.retried = '1';
+      setTimeout(() => {
+        if (!image.isConnected) return;
+        image.src = `${product.image_url}${product.image_url.includes('?') ? '&' : '?'}retry=1`;
+      }, 12000);
+    }}/>}<Droplets className="product-placeholder" size={75} strokeWidth={1}/>{actions}</div>
     <div className="product-info"><span className="product-category">{product.category}</span><h3>{product.name}</h3><p>{product.description}</p><button onClick={() => onEnquire(product)}>Enquire about this <ArrowUpRight size={17}/></button></div>
   </article>;
 }
