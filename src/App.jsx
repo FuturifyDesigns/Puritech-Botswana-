@@ -180,7 +180,7 @@ function App() {
   const currentArticle = articles.find(item => page === `journal/${item.slug}`);
   const currentProduct = page.startsWith('product/') ? activeProducts.find(item => String(item.id) === page.slice(8)) : null;
 
-  const knownPage = ['home', 'about', 'contact', 'products', 'solutions', 'ro-range', 'journal', 'offers', 'editor', '403'].includes(page) || currentArticle || currentSolution || additionalGuides.some(guide => guide.slug === page) || page.startsWith('product/');
+  const knownPage = ['home', 'about', 'contact', 'products', 'solutions', 'ro-range', 'journal', 'offers', 'editor', '403', 'terms-conditions'].includes(page) || currentArticle || currentSolution || additionalGuides.some(guide => guide.slug === page) || page.startsWith('product/');
   const sectionControls = { content, isEditor, onEdit: item => setModal({ kind: "section", item }), onDelete: deletePageSection };
   return <>
     <div className="topline"><div className="container top-inner"><span>Mon - Fri: 8AM - 5PM <span className="top-separator">/</span> Water treatment expertise since 2007</span><span><a href={`tel:${content.contact_phone.replace(/\s/g, '')}`}>{content.contact_phone}</a><span className="top-separator">/</span><a href={`tel:${(content.contact_phone_secondary || '').replace(/\s/g, '')}`}>{content.contact_phone_secondary}</a><i/> <a href={`mailto:${content.contact_email}`}>{content.contact_email}</a></span></div></div>
@@ -202,6 +202,10 @@ function App() {
     {page !== "editor" && <><PageSections scope="site" position="top" {...sectionControls}/><PageSections scope={page} position="top" {...sectionControls}/></>}
     {page === 'editor' && <EditorLogin user={user} isEditor={isEditor}/>}
     {page === '403' && <StatusPage code="403" title="Editor access required" description="Sign in with an approved Puritech editor account."/>}
+    {page === 'terms-conditions' && <main>
+      <PageBanner kicker="LEGACY SITE ARCHIVE" title="Terms and conditions" description="For current purchase or installation terms, confirm the applicable terms with Puritech before ordering."/>
+      <ImportedContent page={{ ...importedPages['terms-conditions'], title: 'Terms from the previous site' }} content={content} isEditor={isEditor} edit={edit} contentKey="archive_terms_body"/>
+    </main>}
     {!knownPage && <StatusPage code="404" title="Page not found" description="The page may have moved or the address may be incorrect."/>}
     {page === 'home' && <main>
       <section className="hero" style={pageHero ? { '--hero-photo': `url("${content.hero_image && content.hero_image !== defaultContent.hero_image ? content.hero_image : pageHero}")` } : {}}><div className="container hero-grid"><div className="hero-copy" data-reveal><div className="eyebrow"><span className="eyebrow-line"/>{content.hero_eyebrow}</div><h1>{content.hero_title}</h1><p>{content.hero_description}</p><div className="hero-buttons"><a className="btn btn-blue" href="/Puritech-Botswana-/products">Explore products <ArrowUpRight size={18}/></a><button className="btn btn-outline" onClick={() => setEnquireProduct(null)}>Talk to an expert</button></div><div className="hero-foot"><span><strong>2007</strong> Established in Botswana</span><span className="foot-divider"/><span><strong>Home to industry</strong> Solutions for every scale</span></div>{isEditor && <EditButton onClick={() => edit(['hero_eyebrow','hero_title','hero_description','hero_image'], 'Edit hero')}/>}</div><div className="hero-visual" data-reveal><div className="hero-stamp"><Droplets size={19}/><span>PURE WATER<br/><strong>BETTER FUTURE</strong></span></div></div></div></section>
@@ -229,7 +233,7 @@ function App() {
     {page === 'contact' && <ContactPage image={pageHero} content={content} isEditor={isEditor} edit={edit}/>}
     {page !== "editor" && <><PageSections scope={page} position="bottom" {...sectionControls}/><PageSections scope="site" position="bottom" {...sectionControls}/></>}
     </div>
-    <footer className="footer"><div className="container footer-grid"><div><a className="brand footer-brand" href="/Puritech-Botswana-/home"><img className="brand-logo" src={logoUrl} alt="Puritech Botswana"/></a><p>Water treatment solutions for homes, businesses and industry across Botswana.</p></div><div><strong>Explore</strong><a href="/Puritech-Botswana-/home">Home</a><a href="/Puritech-Botswana-/products">Products</a><a href="/Puritech-Botswana-/solutions">Solutions</a><a href="/Puritech-Botswana-/about">About us</a><a href="/Puritech-Botswana-/journal">Blog</a><a href="/Puritech-Botswana-/contact">Contact</a></div><div><strong>Get in touch</strong><dl className="footer-contact">
+    <footer className="footer"><div className="container footer-grid"><div><a className="brand footer-brand" href="/Puritech-Botswana-/home"><img className="brand-logo" src={logoUrl} alt="Puritech Botswana"/></a><p>Water treatment solutions for homes, businesses and industry across Botswana.</p></div><div><strong>Explore</strong><a href="/Puritech-Botswana-/home">Home</a><a href="/Puritech-Botswana-/products">Products</a><a href="/Puritech-Botswana-/solutions">Solutions</a><a href="/Puritech-Botswana-/about">About us</a><a href="/Puritech-Botswana-/journal">Blog</a><a href="/Puritech-Botswana-/contact">Contact</a><a href={basePath + "terms-conditions/"}>Legacy terms</a></div><div><strong>Get in touch</strong><dl className="footer-contact">
       <div><dt>Email:</dt><dd><a href={'mailto:' + content.contact_email}>{content.contact_email}</a></dd></div>
       <div><dt>Telephone:</dt><dd>
         <a href={'tel:' + content.contact_phone.replace(/\s/g, '')}>{content.contact_phone}</a>
