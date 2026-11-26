@@ -558,7 +558,6 @@ function ProductDetail({ product, related, onEnquire, actions, content, isEditor
 }
 function EnquiryForm({ product, email, inline = false }) {
   const [form, setForm] = useState({ name: '', phone: '', message: product?.name ? 'I would like a quote and availability for ' + product.name + '.' : '' });
-  const [opened, setOpened] = useState(false);
   const [formError, setFormError] = useState('');
   const send = e => {
     e.preventDefault();
@@ -568,10 +567,9 @@ function EnquiryForm({ product, email, inline = false }) {
     setFormError('');
     const subject = product ? `Product enquiry: ${product.name}` : 'Water treatment enquiry';
     const body = `Hello Puritech Botswana,\n\n${product ? `I would like to enquire about: ${product.name}\nProduct reference: ${product.id || product.name}${product.category ? '\nCategory: ' + product.category : ''}${product.id ? '\nProduct page: ' + new URL(basePath + 'product/' + encodeURIComponent(product.id), window.location.origin).href : ''}\n` : ''}${message}\n\nMy details:\nName: ${name}\nPhone: ${phone || 'Not provided'}\n\nPlease contact me with more information.\n`;
-    setOpened(true);
     window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
-  return <form className={inline ? 'enquiry-form inline-form' : 'enquiry-form'} onSubmit={send}><label>Your name <input required minLength={2} maxLength={100} autoComplete="name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Your full name"/></label><label>Phone number <input type="tel" maxLength={24} autoComplete="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="Optional"/></label>{product && <div className="selected-product"><Check size={17}/> Enquiring about <strong>{product.name}</strong></div>}<label>How can we help? <textarea required minLength={10} maxLength={2000} rows="4" value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} placeholder="Tell us what you need, your location, quantity or any specifications."/></label>{formError && <p className="form-error" role="alert">{formError}</p>}<button className="btn btn-blue" type="submit">Send enquiry by email <ArrowUpRight size={17}/></button>{opened && <p className="mail-note" role="status">Complete your enquiry by sending the draft. If you need to reach us directly, email <a href={`mailto:${email}`}>{email}</a>.</p>}</form>;
+  return <form className={inline ? 'enquiry-form inline-form' : 'enquiry-form'} onSubmit={send}><label>Your name <input required minLength={2} maxLength={100} autoComplete="name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Your full name"/></label><label>Phone number <input type="tel" maxLength={24} autoComplete="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="Optional"/></label>{product && <div className="selected-product"><Check size={17}/> Enquiring about <strong>{product.name}</strong></div>}<label>How can we help? <textarea required minLength={10} maxLength={2000} rows="4" value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} placeholder="Tell us what you need, your location, quantity or any specifications."/></label>{formError && <p className="form-error" role="alert">{formError}</p>}<button className="btn btn-blue" type="submit">Send enquiry by email <ArrowUpRight size={17}/></button></form>;
 }
 
 function EditorModal({ modal, onClose, onSaved, saveContent, saveProduct, savePromotion, categories, isEditor, user, cmsReady, flash }) {
