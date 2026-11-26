@@ -42,7 +42,7 @@ html,body,#root{max-width:100%;overflow-x:clip}main,section,footer,header{min-wi
 .ro-cover:after{display:none}
 .product-image{height:340px;overflow:hidden;background:#fff}
 .catalogue-grid .product-image{height:285px}
-.product-image img{width:88%;height:88%;padding:0;object-fit:contain;object-position:center;background:transparent;transition:transform .45s ease}
+.product-image img{width:88%;height:88%;min-width:0;min-height:0;max-width:100%;max-height:100%;align-self:center;justify-self:center;padding:0;object-fit:contain;object-position:center;background:transparent;transition:transform .45s ease}
 .product-card{transition:transform .3s ease,box-shadow .3s ease,border-color .3s ease}
 .product-card:hover,.product-card:focus-within{transform:translateY(-6px);box-shadow:0 22px 45px #0b34461d;border-color:#95c7d8}
 .product-card:hover .product-image img,.product-card:focus-within .product-image img{transform:scale(1.035)}
