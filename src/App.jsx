@@ -195,7 +195,7 @@ function App() {
 
 const marqueeBrands = [
   ['Canature','canature'], ['Vontron','vontron'], ['PureWater','purewater'],
-  ['Nimbus','nimbus'], ['EMEM','emem'], ['Puritech','puritech']
+  ['Klorman','klorman'], ['EMEM','emem'], ['Puritech','puritech']
 ];
 function BrandMarquee({ content, isEditor, edit }) {
   const fields = marqueeBrands.map((_, index) => `brand_${index + 1}_image`);
