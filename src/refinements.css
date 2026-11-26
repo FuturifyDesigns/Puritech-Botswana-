@@ -212,7 +212,7 @@
   .page-content { animation: route-enter 360ms ease-out both; }
 }
 @media (max-width: 800px) {
-  .topline .top-inner > span:last-child > :is(a[href^="tel:"], .top-separator, i) { display: none; }
+  .topline { display: none; }
 }
 
 .about-redesign .about-hero {
@@ -377,3 +377,8 @@
   .footer .footer-bottom { grid-template-columns: 1fr; justify-items: center; text-align: center; }
   .footer .footer-bottom a { justify-self: center; text-align: center; }
 }
+
+.footer-contact { display: grid; gap: 8px; margin: 0; }
+.footer-contact > div { display: grid; grid-template-columns: 5.5em minmax(0, 1fr); gap: 8px; }
+.footer-contact dt { font-weight: 700; }
+.footer-contact dd { min-width: 0; margin: 0; overflow-wrap: anywhere; }
