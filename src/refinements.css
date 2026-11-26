@@ -390,3 +390,12 @@
   .footer-contact > div { grid-template-columns: 1fr; gap: 4px; }
   .footer-contact a[href^="tel:"] { min-height: 44px; }
 }
+
+.cms-sections { display: grid; gap: 18px; padding-block: 18px; }
+.cms-section { display: flex; flex-wrap: wrap; align-items: center; gap: 20px; padding: clamp(16px, 4vw, 32px); background: #f2f8fa; border: 1px solid #dbe8ee; border-radius: 12px; overflow-wrap: anywhere; }
+.cms-section > div { flex: 1 1 260px; }
+.cms-section img { width: min(100%, 320px); max-height: 360px; object-fit: contain; border-radius: 8px; }
+.cms-section h2 { margin-top: 0; }
+.cms-section p { line-height: 1.65; white-space: pre-line; }
+.cms-section-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 12px; }
+.cms-sections > .edit-button { justify-self: start; }
