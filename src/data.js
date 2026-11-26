@@ -43,7 +43,7 @@ export const defaultContent = {
   intro_description: 'Explore reliable systems, components and expert support for homes, businesses and industry across Botswana.',
   about_title: 'Good water is the beginning of everything.',
   about_description: 'SANCTITY (Pty) Ltd trading as Puritech Botswana was established in 2007. We provide expertise in water treatment and purification systems from Gaborone International Commerce Park, representing Puritech for domestic products and Nimbus Water Technologies for larger projects.',
-  contact_title: 'Let's talk about your water.',
+  contact_title: "Let's talk about your water.",
   contact_description: 'Tell us what you need and our team will help you find the right solution.',
   contact_email: 'info@water.co.bw',
   contact_phone: '+267 318 7879',
