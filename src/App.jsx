@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ArrowUpRight, Check, ChevronDown, Droplets, Edit3, Filter, ImagePlus, Mail, MapPin, Menu, Phone, Plus, Search, Settings2, ShieldCheck, SlidersHorizontal, Trash2, X } from 'lucide-react';
+import { ArrowUpRight, Check, ChevronDown, Clock, Droplets, Edit3, Facebook, Filter, ImagePlus, Mail, MapPin, Menu, Phone, Plus, Search, Settings2, ShieldCheck, SlidersHorizontal, Trash2, X } from 'lucide-react';
 import { defaultContent, initialProducts } from './data';
 import { articles, solutionPages } from './pages';
 import importedPages from './imported-pages.json';
@@ -197,10 +197,9 @@ function App() {
     {page === 'journal' && <Journal articles={articles} image={pageHero} content={content} edit={edit} isEditor={isEditor}/>}
     {currentArticle && <ArticleDetail article={currentArticle} content={content} edit={edit} isEditor={isEditor} onEnquire={() => setEnquireProduct(null)}/>}
     {page === 'about' && <AboutPage image={pageHero} content={content} isEditor={isEditor} edit={edit} onEnquire={() => setEnquireProduct(null)}/>}
-    {page === 'contact' && <main className="contact-page"><PageBanner image={pageHero} kicker="CONTACT OUR TEAM" title={content.contact_title} description={content.contact_description}/>{isEditor && <div className="container page-edit"><EditButton onClick={() => edit(['contact_title','contact_description','contact_email','contact_phone','contact_phone_secondary','contact_address'], 'Edit contact details')}/></div>}<section className="section contact-section"><div className="container contact-layout"><div><span className="kicker">WE'RE HERE TO HELP</span><h2>Start the conversation.</h2><p>Tell us about the water challenge, the product you have in mind, or the project you are planning.</p><div className="contact-items"><a href={`mailto:${content.contact_email}`}><Mail/><span><small>EMAIL US</small>{content.contact_email}</span></a><a href={`tel:${content.contact_phone.replace(/\s/g,'')}`}><Phone/><span><small>CALL US</small>{content.contact_phone}</span></a><a href={`tel:${(content.contact_phone_secondary || '').replace(/\s/g,'')}`}><Phone/><span><small>ALTERNATIVE NUMBER</small>{content.contact_phone_secondary}</span></a><div><MapPin/><span><small>VISIT US</small>{content.contact_address}</span></div></div><ContactMap address={content.contact_address}/><small className="hours">Monday - Friday &middot; 8:00 AM - 5:00 PM</small></div><EnquiryForm product={null} email={content.contact_email} inline/></div></section></main>}
-    {page === 'contact' && <ImportedContent page={importedPages['contact-us-3']} content={content} isEditor={isEditor} edit={edit} contentKey="archive_contact_body"/>}
+    {page === 'contact' && <ContactPage image={pageHero} content={content} isEditor={isEditor} edit={edit}/>}
     </div>
-    <footer className="footer"><div className="container footer-grid"><div><a className="brand footer-brand" href="/Puritech-Botswana-/home"><img className="brand-logo" src={logoUrl} alt="Puritech Botswana"/></a><p>Water treatment solutions for homes, businesses and industry across Botswana.</p></div><div><strong>Explore</strong><a href="/Puritech-Botswana-/home">Home</a><a href="/Puritech-Botswana-/products">Products</a><a href="/Puritech-Botswana-/solutions">Solutions</a><a href="/Puritech-Botswana-/about">About us</a><a href="/Puritech-Botswana-/journal">Journal</a><a href="/Puritech-Botswana-/contact">Contact</a></div><div><strong>Get in touch</strong><a href={`mailto:${content.contact_email}`}>{content.contact_email}</a><a href={`tel:${content.contact_phone.replace(/\s/g,'')}`}>{content.contact_phone}</a><a href={`tel:${(content.contact_phone_secondary || '').replace(/\s/g, '')}`}>{content.contact_phone_secondary}</a><a href="https://www.facebook.com/sanctityH20/" target="_blank" rel="noopener noreferrer">Facebook</a><span>Gaborone, Botswana</span></div></div><div className="container footer-bottom"><span>&copy; {new Date().getFullYear()} Puritech Botswana. All rights reserved.</span><a href="https://futurifydesigns.com/" target="_blank" rel="noopener noreferrer">Built by Futurify Designs</a></div></footer>
+    <footer className="footer"><div className="container footer-grid"><div><a className="brand footer-brand" href="/Puritech-Botswana-/home"><img className="brand-logo" src={logoUrl} alt="Puritech Botswana"/></a><p>Water treatment solutions for homes, businesses and industry across Botswana.</p></div><div><strong>Explore</strong><a href="/Puritech-Botswana-/home">Home</a><a href="/Puritech-Botswana-/products">Products</a><a href="/Puritech-Botswana-/solutions">Solutions</a><a href="/Puritech-Botswana-/about">About us</a><a href="/Puritech-Botswana-/journal">Journal</a><a href="/Puritech-Botswana-/contact">Contact</a></div><div><strong>Get in touch</strong><a href={`mailto:${content.contact_email}`}>{content.contact_email}</a><a href={`tel:${content.contact_phone.replace(/\s/g,'')}`}>{content.contact_phone}</a><a href={`tel:${(content.contact_phone_secondary || '').replace(/\s/g, '')}`}>{content.contact_phone_secondary}</a><a className="footer-social" href="https://www.facebook.com/sanctityH20/" target="_blank" rel="noopener noreferrer" aria-label="Puritech Botswana on Facebook"><Facebook size={19} aria-hidden="true"/></a><span>Gaborone, Botswana</span></div></div><div className="container footer-bottom"><small>&copy; {new Date().getFullYear()} Puritech Botswana. All rights reserved.</small><a href="https://futurifydesigns.com/" target="_blank" rel="noopener noreferrer">Built by <strong>Futurify Designs</strong></a></div></footer>
     {notice && <div className="toast" role="status">{notice}</div>}
     {enquireProduct !== undefined && enquireProduct !== null && <div className="modal-backdrop" onMouseDown={() => setEnquireProduct(undefined)}><div className="modal enquiry-modal" onMouseDown={e => e.stopPropagation()}><button className="modal-close" onClick={() => setEnquireProduct(undefined)} aria-label="Close"><X/></button><span className="kicker">REQUEST AN ENQUIRY</span><h2>Let's find the right fit.</h2><EnquiryForm product={enquireProduct} email={content.contact_email}/></div></div>}
     {enquireProduct === null && <div className="modal-backdrop" onMouseDown={() => setEnquireProduct(undefined)}><div className="modal enquiry-modal" onMouseDown={e => e.stopPropagation()}><button className="modal-close" onClick={() => setEnquireProduct(undefined)} aria-label="Close"><X/></button><span className="kicker">REQUEST AN ENQUIRY</span><h2>Let's find the right fit.</h2><EnquiryForm product={null} email={content.contact_email}/></div></div>}
@@ -372,6 +371,34 @@ function ImportedContent({ page, content, isEditor, edit, contentKey }) {
 
 function EditButton({ onClick }) { return <button className="edit-button" onClick={onClick} aria-label="Edit section"><Edit3 size={15}/> Edit section</button>; }
 function PageBanner({ kicker, title, description, image }) { return <div className="page-banner" style={image ? { '--hero-photo': `url("${image}")` } : {}}><div className="container"><span className="kicker">{kicker}</span><h1>{title}</h1><p>{description}</p></div><div className="banner-mark"><Droplets size={260} strokeWidth={.7}/></div></div>; }
+function ContactPage({ image, content, isEditor, edit }) {
+  const { contact_title, contact_description, contact_email, contact_phone, contact_phone_secondary, contact_address } = content;
+  return <main className="contact-page">
+    <PageBanner image={image} kicker="CONTACT OUR TEAM" title={contact_title} description={contact_description}/>
+    <section className="section contact-section">
+      <div className="container contact-layout">
+        <div>
+          <h2>Contact details</h2>
+          {isEditor && <EditButton onClick={() => edit(['contact_title','contact_description','contact_email','contact_phone','contact_phone_secondary','contact_address'], 'Edit contact details')}/>}
+          <dl className="contact-items">
+            <div><dt><Mail size={19} aria-hidden="true"/> Email</dt><dd><a href={'mailto:' + contact_email}>{contact_email}</a></dd></div>
+            <div><dt><Phone size={19} aria-hidden="true"/> Phone</dt><dd>
+              <a href={'tel:' + contact_phone.replace(/\s/g, '')}>{contact_phone}</a>
+              {contact_phone_secondary && <a href={'tel:' + contact_phone_secondary.replace(/\s/g, '')}>{contact_phone_secondary}</a>}
+            </dd></div>
+            <div><dt><MapPin size={19} aria-hidden="true"/> Showroom</dt><dd><address>{contact_address}</address></dd></div>
+            <div><dt><Clock size={19} aria-hidden="true"/> Opening hours</dt><dd>Monday to Friday<br/><time dateTime="08:00">8:00 AM</time> to <time dateTime="17:00">5:00 PM</time></dd></div>
+          </dl>
+          <ContactMap address={contact_address}/>
+        </div>
+        <section className="contact-form-panel" aria-labelledby="contact-form-title">
+          <h2 id="contact-form-title">Send an enquiry</h2>
+          <EnquiryForm product={null} email={contact_email} inline/>
+        </section>
+      </div>
+    </section>
+  </main>;
+}
 function ContactMap({ address }) {
   const isShowroom = address === defaultContent.contact_address;
   const query = encodeURIComponent(isShowroom ? '8V5J+89 Gaborone, Botswana' : address);
@@ -381,7 +408,6 @@ function ContactMap({ address }) {
   return <figure className="location-map">
     <iframe title="Map showing the Puritech Botswana showroom" src={mapUrl} loading="lazy" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen/>
     <figcaption className="location-map-caption">
-      <span><strong>Visit our showroom</strong><small>{address}</small></span>
       <a href={'https://www.google.com/maps/dir/?api=1&destination=' + query} target="_blank" rel="noopener noreferrer">Get directions <ArrowUpRight size={16}/></a>
     </figcaption>
   </figure>;
@@ -463,7 +489,7 @@ function EnquiryForm({ product, email, inline = false }) {
     setOpened(true);
     window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
-  return <form className={inline ? 'enquiry-form inline-form' : 'enquiry-form'} onSubmit={send}><div className="form-row"><label>Your name <input required minLength={2} maxLength={100} autoComplete="name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Your full name"/></label><label>Email address <input type="email" required maxLength={254} autoComplete="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="you@example.com"/></label></div><label>Phone number <input type="tel" maxLength={24} autoComplete="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="Optional"/></label>{product && <div className="selected-product"><Check size={17}/> Enquiring about <strong>{product.name}</strong></div>}<label>How can we help? <textarea required minLength={10} maxLength={2000} rows="4" value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} placeholder="Tell us what you need, your location, quantity or any specifications."/></label>{formError && <p className="form-error" role="alert">{formError}</p>}<button className="btn btn-blue" type="submit">Open email app <ArrowUpRight size={17}/></button><small>Your email app opens with the message prepared. Review it and press Send there.</small>{opened && <p className="mail-note" role="status">Email app opened? Please press Send in your email app to complete your enquiry. If nothing opened, email <a href={`mailto:${email}`}>{email}</a>.</p>}</form>;
+  return <form className={inline ? 'enquiry-form inline-form' : 'enquiry-form'} onSubmit={send}><div className="form-row"><label>Your name <input required minLength={2} maxLength={100} autoComplete="name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Your full name"/></label><label>Email address <input type="email" required maxLength={254} autoComplete="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="you@example.com"/></label></div><label>Phone number <input type="tel" maxLength={24} autoComplete="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="Optional"/></label>{product && <div className="selected-product"><Check size={17}/> Enquiring about <strong>{product.name}</strong></div>}<label>How can we help? <textarea required minLength={10} maxLength={2000} rows="4" value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} placeholder="Tell us what you need, your location, quantity or any specifications."/></label>{formError && <p className="form-error" role="alert">{formError}</p>}<button className="btn btn-blue" type="submit">Send enquiry by email <ArrowUpRight size={17}/></button>{opened && <p className="mail-note" role="status">Complete your enquiry by sending the draft. If you need to reach us directly, email <a href={`mailto:${email}`}>{email}</a>.</p>}</form>;
 }
 
 function EditorModal({ modal, onClose, onSaved, saveContent, saveProduct, savePromotion, categories, isEditor, user, cmsReady, flash }) {
