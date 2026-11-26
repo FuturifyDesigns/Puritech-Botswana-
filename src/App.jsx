@@ -31,6 +31,7 @@ const editorialMedia = import.meta.glob('./editorial-media/*.webp', { eager: tru
 const aboutTeamPhoto = editorialMedia['./editorial-media/about-team.webp'];
 const heroMedia = {
   ...Object.fromEntries(Object.entries(bundledHeroes).map(([file, url]) => [file.split('/').at(-1).replace('.webp', ''), url])),
+  offers: basePath + 'editorial/top-offers.webp',
   products: basePath + 'editorial/shop.webp'
 };
 const articleMedia = ['blog_uv','blog_sand','blog_iron','blog_drinking','blog_borehole','blog_hardness','blog_dmi','blog_filter','blog_softener','blog_iron_effects'];
@@ -53,7 +54,8 @@ function App() {
   const [promotions, setPromotions] = useState([]);
   const [content, setContent] = useState(defaultContent);
   const [user, setUser] = useState(null);
-  const [isEditor, setIsEditor] = useState(false);
+  const [editorId, setEditorId] = useState(null);
+  const isEditor = Boolean(user && user.id === editorId);
   const [modal, setModal] = useState(null);
   const [enquireProduct, setEnquireProduct] = useState(undefined);
   const [search, setSearch] = useState('');
@@ -75,7 +77,6 @@ function App() {
     };
     addEventListener('popstate', onRoute);
     document.addEventListener('click', onInternalLink);
-    supabase.auth.getUser().then(({ data }) => setUser(data.user || null));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => setUser(session?.user || null));
     return () => { removeEventListener('popstate', onRoute); document.removeEventListener('click', onInternalLink); subscription.unsubscribe(); };
   }, []);
@@ -83,26 +84,40 @@ function App() {
   useEffect(() => {
     let cancelled = false;
     async function load() {
+      const timeout = AbortSignal.timeout(7000);
       const [p, o, c] = await Promise.all([
-        supabase.from('products').select('*').order('sort_order').order('created_at', { ascending: false }),
-        supabase.from('promotions').select('*').order('sort_order'),
-        supabase.from('site_content').select('key,value'),
+        supabase.from('products').select('id,name,category,description,image_url,source_url,featured,active,sort_order').order('sort_order').order('created_at', { ascending: false }).abortSignal(timeout),
+        supabase.from('promotions').select('*').order('sort_order').abortSignal(timeout),
+        supabase.from('site_content').select('key,value').abortSignal(timeout),
       ]);
       if (cancelled) return;
+      setCmsReady(!(p.error || o.error || c.error));
+      if (o.data) setPromotions(o.data.map(promotion => cleanTextFields(promotion, ['title', 'subtitle', 'cta_label'])));
+      if (c.data) setContent({ ...defaultContent, ...Object.fromEntries(c.data.map(({ key, value }) => [key, typeof value === 'string' && !key.endsWith('_image') && !key.startsWith('section:') ? readableSourceText(value) : value])) });
+      let catalogue = p.data;
+      if (p.error) {
+        try {
+          const response = await fetch(basePath + 'catalogue-snapshot.json', { signal: AbortSignal.timeout(4500) });
+          if (response.ok) catalogue = await response.json();
+        } catch {
+          // Starter products remain available if both catalogue sources fail.
+        }
+      }
+      if (cancelled) return;
+      if (Array.isArray(catalogue)) setProducts(catalogue.map(product => cleanTextFields(product, ['name', 'category', 'description'])));
       setCatalogueLoading(false);
-      if (p.error || o.error || c.error) { setCmsReady(false); return; }
-      setCmsReady(true);
-      if (p.data?.length) setProducts(p.data.map(product => cleanTextFields(product, ["name", "category", "description"])));
-      setPromotions((o.data || []).map(promotion => cleanTextFields(promotion, ["title", "subtitle", "cta_label"])));
-      setContent({ ...defaultContent, ...Object.fromEntries((c.data || []).map(({ key, value }) => [key, typeof value === "string" && !key.endsWith("_image") ? readableSourceText(value) : value])) });
     }
     load();
     return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
-    if (!user) { setIsEditor(false); return; }
-    supabase.from('editors').select('user_id').eq('user_id', user.id).maybeSingle().then(({ data }) => setIsEditor(Boolean(data)));
+    if (!user) return;
+    let active = true;
+    supabase.from('editors').select('user_id').eq('user_id', user.id).maybeSingle().then(({ data }) => {
+      if (active) setEditorId(data?.user_id || null);
+    });
+    return () => { active = false; };
   }, [user]);
 
 
@@ -165,6 +180,7 @@ function App() {
   const currentArticle = articles.find(item => page === `journal/${item.slug}`);
   const currentProduct = page.startsWith('product/') ? activeProducts.find(item => String(item.id) === page.slice(8)) : null;
 
+  const knownPage = ['home', 'about', 'contact', 'products', 'solutions', 'ro-range', 'journal', 'offers', 'editor', '403'].includes(page) || currentArticle || currentSolution || additionalGuides.some(guide => guide.slug === page) || page.startsWith('product/');
   const sectionControls = { content, isEditor, onEdit: item => setModal({ kind: "section", item }), onDelete: deletePageSection };
   return <>
     <div className="topline"><div className="container top-inner"><span>Mon - Fri: 8AM - 5PM <span className="top-separator">/</span> Water treatment expertise since 2007</span><span><a href={`tel:${content.contact_phone.replace(/\s/g, '')}`}>{content.contact_phone}</a><span className="top-separator">/</span><a href={`tel:${(content.contact_phone_secondary || '').replace(/\s/g, '')}`}>{content.contact_phone_secondary}</a><i/> <a href={`mailto:${content.contact_email}`}>{content.contact_email}</a></span></div></div>
@@ -185,6 +201,8 @@ function App() {
     <div className="page-content" key={page}>
     {page !== "editor" && <><PageSections scope="site" position="top" {...sectionControls}/><PageSections scope={page} position="top" {...sectionControls}/></>}
     {page === 'editor' && <EditorLogin user={user} isEditor={isEditor}/>}
+    {page === '403' && <StatusPage code="403" title="Editor access required" description="Sign in with an approved Puritech editor account."/>}
+    {!knownPage && <StatusPage code="404" title="Page not found" description="The page may have moved or the address may be incorrect."/>}
     {page === 'home' && <main>
       <section className="hero" style={pageHero ? { '--hero-photo': `url("${content.hero_image && content.hero_image !== defaultContent.hero_image ? content.hero_image : pageHero}")` } : {}}><div className="container hero-grid"><div className="hero-copy" data-reveal><div className="eyebrow"><span className="eyebrow-line"/>{content.hero_eyebrow}</div><h1>{content.hero_title}</h1><p>{content.hero_description}</p><div className="hero-buttons"><a className="btn btn-blue" href="/Puritech-Botswana-/products">Explore products <ArrowUpRight size={18}/></a><button className="btn btn-outline" onClick={() => setEnquireProduct(null)}>Talk to an expert</button></div><div className="hero-foot"><span><strong>2007</strong> Established in Botswana</span><span className="foot-divider"/><span><strong>Home to industry</strong> Solutions for every scale</span></div>{isEditor && <EditButton onClick={() => edit(['hero_eyebrow','hero_title','hero_description','hero_image'], 'Edit hero')}/>}</div><div className="hero-visual" data-reveal><div className="hero-stamp"><Droplets size={19}/><span>PURE WATER<br/><strong>BETTER FUTURE</strong></span></div></div></div></section>
       <section className="store-benefits"><div className="container"><span><Droplets size={23}/> Product advice for every application</span><span><ShieldCheck size={23}/> Local support since 2007</span><span><Mail size={23}/> Enquire before you order</span></div></section>
@@ -198,9 +216,9 @@ function App() {
       <section className="section intro-section"><div className="container intro-grid"><div data-reveal><span className="kicker">THE PURITECH APPROACH</span><h2>{content.intro_title}</h2>{isEditor && <EditButton onClick={() => edit(['intro_title','intro_description'], 'Edit introduction')}/>}</div><div data-reveal><p>{content.intro_description}</p><a className="under-link" href="/Puritech-Botswana-/about">Get to know us <ArrowUpRight size={17}/></a></div></div></section>
       <section className="editorial"><div className="container editorial-inner"><div><span className="kicker">NEED A RECOMMENDATION?</span><h2>Water problems are different.<br/><em>So are the solutions.</em></h2><p>Tell us about your water source, required volume and intended use. We can help you select the equipment.</p><button className="btn btn-white" onClick={() => setEnquireProduct(null)}>Send an enquiry <ArrowUpRight size={17}/></button></div><div className="editorial-art"><div className="art-ring"/><Droplets size={120} strokeWidth={1}/></div></div></section>
     </main>}
-    {page === 'offers' && <main className="offers-page"><PageBanner kicker="PURITECH / TOP OFFERS" title={content.offers_title || 'Offers worth exploring.'} description={content.offers_description || 'Current promotions and selected equipment. Ask our team for availability and a current quote.'} image={content.offers_image || activePromos[0]?.image_url || pageHero}/><section className="section promos-section"><div className="container"><div className="section-heading"><div><span className="kicker">LATEST PROMOTIONS</span><h2>Current announcements</h2></div>{isEditor && <button className="offer-add" onClick={() => setModal({ kind: 'promotion', item: { ...emptyPromotion, sort_order: promotions.length } })}><Plus size={17}/> Add promotion</button>}</div>{isEditor && <EditButton onClick={() => edit(['offers_title','offers_description','offers_image'], 'Edit offers page', { offers_title: 'Offers worth exploring.', offers_description: 'Current promotions and selected equipment. Ask our team for availability and a current quote.' })}/>}{activePromos.length ? <div className="promo-grid">{activePromos.map(p => <div className="promo-card" key={p.id} style={p.image_url ? { backgroundImage: `linear-gradient(90deg,rgba(4,26,47,.87),rgba(4,26,47,.24)),url("${p.image_url}")` } : {}}><div><span className="kicker">PURITECH BOTSWANA</span><h3>{p.title}</h3><p>{p.subtitle}</p><button className="btn btn-white" onClick={() => setEnquireProduct({ name: p.title })}>{p.cta_label || 'Enquire now'} <ArrowUpRight size={17}/></button></div>{isEditor && <div className="card-edit"><button aria-label={`Edit ${p.title}`} onClick={() => setModal({ kind: 'promotion', item: p })}><Edit3 size={15}/></button><button aria-label={`Delete ${p.title}`} onClick={() => remove('promotion', p)}><Trash2 size={15}/></button></div>}</div>)}</div> : <div className="offers-empty"><h3>New offers are on the way.</h3><p>Explore the current product range or contact our team for a quote.</p><a href="/Puritech-Botswana-/products" className="btn btn-blue">Browse products <ArrowUpRight size={17}/></a></div>}</div></section><section className="section storefront-products"><div className="container"><div className="section-heading"><div><span className="kicker">EXPLORE THE RANGE</span><h2>Featured equipment</h2></div><a className="under-link" href="/Puritech-Botswana-/products">All products <ArrowUpRight size={17}/></a></div><div className="product-grid">{(featured.length ? featured : activeProducts.slice(0,6)).map(p => <ProductCard key={p.id} product={p} onEnquire={setEnquireProduct} actions={productActions(p)}/>)}</div></div></section></main>}
+    {page === 'offers' && <main className="offers-page"><PageBanner kicker="PURITECH / TOP OFFERS" title={content.offers_title || 'Offers worth exploring.'} description={content.offers_description || 'Current promotions and selected equipment. Ask our team for availability and a current quote.'} image={content.offers_image || pageHero}/><section className="section promos-section"><div className="container"><div className="section-heading"><div><span className="kicker">LATEST PROMOTIONS</span><h2>Current announcements</h2></div>{isEditor && <button className="offer-add" onClick={() => setModal({ kind: 'promotion', item: { ...emptyPromotion, sort_order: promotions.length } })}><Plus size={17}/> Add promotion</button>}</div>{isEditor && <EditButton onClick={() => edit(['offers_title','offers_description','offers_image'], 'Edit offers page', { offers_title: 'Offers worth exploring.', offers_description: 'Current promotions and selected equipment. Ask our team for availability and a current quote.' })}/>}{activePromos.length ? <div className="promo-grid">{activePromos.map(p => <div className="promo-card" key={p.id} style={p.image_url ? { backgroundImage: `linear-gradient(90deg,rgba(4,26,47,.87),rgba(4,26,47,.24)),url("${p.image_url}")` } : {}}><div><span className="kicker">PURITECH BOTSWANA</span><h3>{p.title}</h3><p>{p.subtitle}</p><button className="btn btn-white" onClick={() => setEnquireProduct({ name: p.title })}>{p.cta_label || 'Enquire now'} <ArrowUpRight size={17}/></button></div>{isEditor && <div className="card-edit"><button aria-label={`Edit ${p.title}`} onClick={() => setModal({ kind: 'promotion', item: p })}><Edit3 size={15}/></button><button aria-label={`Delete ${p.title}`} onClick={() => remove('promotion', p)}><Trash2 size={15}/></button></div>}</div>)}</div> : <div className="offers-empty"><h3>New offers are on the way.</h3><p>Explore the current product range or contact our team for a quote.</p><a href="/Puritech-Botswana-/products" className="btn btn-blue">Browse products <ArrowUpRight size={17}/></a></div>}</div></section><section className="section storefront-products"><div className="container"><div className="section-heading"><div><span className="kicker">EXPLORE THE RANGE</span><h2>Featured equipment</h2></div><a className="under-link" href="/Puritech-Botswana-/products">All products <ArrowUpRight size={17}/></a></div><div className="product-grid">{(featured.length ? featured : activeProducts.slice(0,6)).map(p => <ProductCard key={p.id} product={p} onEnquire={setEnquireProduct} actions={productActions(p)}/>)}</div></div></section></main>}
     {page === 'products' && <main><PageBanner kicker="THE PRODUCT RANGE" title={content.products_title || "Find your water solution."} description={content.products_description || "Explore our full equipment range. Need guidance? Send an enquiry and our team will help."} image={pageHero}/>{isEditor && <div className="container page-edit"><EditButton onClick={() => edit(["products_title","products_description"], "Edit products introduction", { products_title: "Find your water solution.", products_description: "Explore our full equipment range. Need guidance? Send an enquiry and our team will help." })}/></div>}<section className="section catalogue"><div className="container"><div className="catalogue-tools"><label className="search-box"><Search size={19}/><input placeholder="Search products" value={search} onChange={e => { setSearch(e.target.value); setVisibleCount(24); }}/></label><label className="select-wrap"><SlidersHorizontal size={18}/><select value={category} onChange={e => { setCategory(e.target.value); setVisibleCount(24); }}>{categories.map(c => <option key={c}>{c}</option>)}</select><ChevronDown size={16}/></label><span className="result-count">{filtered.length} {filtered.length === 1 ? 'product' : 'products'}</span></div><div className="catalogue-layout"><aside className="category-sidebar"><span className="kicker">CATEGORIES</span>{categories.map(c => <button key={c} className={category === c ? 'selected' : ''} onClick={() => { setCategory(c); setVisibleCount(24); }}>{c}<span>{c === 'All products' ? activeProducts.length : activeProducts.filter(p => p.category === c).length}</span></button>)}</aside><div>{filtered.length ? <div className="product-grid catalogue-grid">{filtered.slice(0, visibleCount).map(p => <ProductCard key={p.id} product={p} onEnquire={setEnquireProduct} actions={productActions(p)}/>)}</div> : <div className="empty-state">No products match that search. Try a different category or <button onClick={() => {setSearch('');setCategory('All products');}}>clear filters</button>.</div>}{filtered.length > visibleCount && <div className="load-more"><button className="btn btn-outline-dark" onClick={() => setVisibleCount(count => count + 24)}>Show more products</button><span>Showing {Math.min(visibleCount, filtered.length)} of {filtered.length}</span></div>}</div></div></div></section></main>}
-    {page.startsWith('product/') && (currentProduct ? <ProductDetail product={currentProduct} related={activeProducts.filter(item => item.id !== currentProduct.id && item.category === currentProduct.category).slice(0, 3)} onEnquire={setEnquireProduct} actions={productActions(currentProduct)} content={content} isEditor={isEditor} edit={edit}/> : <main className="product-detail missing-product"><div className="container"><a href="/Puritech-Botswana-/products" className="back-link">Back to products</a><h1>{catalogueLoading ? 'Loading product...' : 'Product unavailable'}</h1>{!catalogueLoading && <p>This item may have been removed. Browse the current catalogue to find an alternative.</p>}</div></main>)}
+    {page.startsWith('product/') && (currentProduct ? <ProductDetail product={currentProduct} related={activeProducts.filter(item => item.id !== currentProduct.id && item.category === currentProduct.category).slice(0, 3)} onEnquire={setEnquireProduct} actions={productActions(currentProduct)} content={content} isEditor={isEditor} edit={edit}/> : (catalogueLoading ? <main className="container section"><h1>Loading product…</h1></main> : <StatusPage code="404" title="Product unavailable" description="Browse the current catalogue to find an alternative."/>))}
     {page === 'solutions' && <SolutionsHub pages={solutionPages} image={pageHero} content={content} edit={edit} isEditor={isEditor} onEnquire={() => setEnquireProduct(null)}/>}
     {additionalGuides.map(guide => page === guide.slug && <main key={guide.slug}><PageBanner kicker="PURITECH / TECHNICAL GUIDE" title={guide.title} description={guide.description} image={pageHero}/><ImportedContent page={importedPages[guide.slug]} content={content} isEditor={isEditor} edit={edit} contentKey={'archive_' + guide.slug + '_body'}/><section className="solution-next"><div className="container"><h2>Need help applying this to your project?</h2><button className="btn btn-white" onClick={() => setEnquireProduct({ name: guide.title })}>Send an enquiry <ArrowUpRight size={17}/></button></div></section></main>)}
     {page === 'ro-range' && <ROSystems products={activeProducts} image={pageHero} onEnquire={setEnquireProduct}/>}
@@ -430,6 +448,18 @@ function ContactMap({ address }) {
     </figcaption>
   </figure>;
 }
+function StatusPage({ code, title, description }) {
+  return <main className="status-page"><div className="container">
+    <span className="status-code">{code}</span>
+    <h1>{title}</h1>
+    <p>{description}</p>
+    <div className="status-actions">
+      <a className="btn btn-blue" href={basePath + (code === '403' ? 'editor/' : 'home/')}>{code === '403' ? 'Editor sign-in' : 'Back to home'}</a>
+      <a className="btn btn-outline-dark" href={basePath + 'products/'}>Browse products</a>
+    </div>
+  </div></main>;
+}
+
 function EditorLogin({ user, isEditor }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -441,7 +471,7 @@ function EditorLogin({ user, isEditor }) {
     if (authError) setError(authError.message);
     else {
       const { data: member, error: memberError } = await supabase.from('editors').select('user_id').eq('user_id', data.user.id).maybeSingle();
-      if (memberError || !member) { await supabase.auth.signOut(); setError('This account does not have editor access.'); }
+      if (memberError || !member) { await supabase.auth.signOut(); navigate('403'); }
       else navigate('home');
     }
     setBusy(false);
