@@ -97,13 +97,54 @@ for (const page of [...solutionPages, ...articles, ...extraPages]) {
 
 const key = process.env.SUPABASE_PUBLISHABLE_KEY;
 if (!key) throw new Error('Missing public Supabase publishable key');
-const query = 'https://azvpkkxbtnbbgpyvzbuw.supabase.co/rest/v1/products?select=id,image_url&active=eq.true&limit=1000';
+const query = 'https://azvpkkxbtnbbgpyvzbuw.supabase.co/rest/v1/products?select=id,image_url,source_url&active=eq.true&limit=1000';
 let products = [];
 try {
   const productResponse = await fetch(query, { headers: { apikey: key }, signal: AbortSignal.timeout(25000) });
   if (!productResponse.ok) throw new Error(`Catalogue request failed: ${productResponse.status}`);
   products = await productResponse.json();
 } catch (error) { console.log(`Catalogue request skipped: ${error.message}`); }
+
+// The WooCommerce Store API exposes the published product description, image
+// gallery, SKU and attributes without a WordPress administrator session.
+// Match by the canonical permalink so order changes do not attach the wrong
+// technical details to a catalogue item.
+const details = JSON.parse(await fs.readFile('src/product-details.json', 'utf8'));
+const bySourcePath = new Map(products.filter(p => p.source_url).map(p => {
+  try { return [new URL(p.source_url).pathname.replace(/\/+$/, '').toLowerCase(), p.id]; }
+  catch { return [null, null]; }
+}).filter(([pathname, id]) => pathname && id));
+for (let page = 1; page <= 10 && bySourcePath.size; page++) {
+  try {
+    const response = await get(`https://water.co.bw/wp-json/wc/store/v1/products?per_page=100&page=${page}`, 1);
+    if (!response) break;
+    const sourceProducts = await response.json();
+    if (!Array.isArray(sourceProducts) || !sourceProducts.length) break;
+    let saved = 0;
+    for (const source of sourceProducts) {
+      if (!source.permalink) continue;
+      const pathname = new URL(source.permalink).pathname.replace(/\/+$/, '').toLowerCase();
+      const id = bySourcePath.get(pathname);
+      if (!id) continue;
+      const html = sanitizeHtml(source.description || '', {
+        allowedTags: ['h2','h3','h4','p','br','ul','ol','li','strong','b','em','i','a','table','thead','tbody','tr','td','th','blockquote'],
+        allowedAttributes: { a: ['href','title'] },
+        allowedSchemes: ['https','http']
+      });
+      const images = (source.images || []).map(image => image.src).filter(url => {
+        try { const parsed = new URL(url); return parsed.protocol === 'https:' && allowedHosts.has(parsed.hostname); }
+        catch { return false; }
+      });
+      const attributes = (source.attributes || []).map(attribute => [attribute.name, (attribute.terms || []).map(term => term.name).join(', ') || attribute.value || '']).filter(([name, value]) => name && value);
+      details[id] = { html, sku: String(source.sku || ''), images, attributes };
+      saved++;
+    }
+    await fs.writeFile('src/product-details.json', JSON.stringify(details, null, 2) + '\n');
+    console.log(`Store API page ${page}: ${saved} matching products; total ${Object.keys(details).length}`);
+    if (sourceProducts.length < 100) break;
+    await sleep(1200);
+  } catch (error) { console.log(`Store API page ${page} unavailable: ${error.message}`); break; }
+}
 const manifest = JSON.parse(await fs.readFile('src/media-manifest.json', 'utf8'));
 let mirrored = 0;
 for (const product of products) {
