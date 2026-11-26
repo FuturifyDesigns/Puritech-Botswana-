@@ -399,3 +399,6 @@
 .cms-section p { line-height: 1.65; white-space: pre-line; }
 .cms-section-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 12px; }
 .cms-sections > .edit-button { justify-self: start; }
+.footer-contact dd:has(a[href^="tel:"]) { display: flex; flex-wrap: wrap; align-items: center; gap: 0 7px; }
+.footer-contact dd:has(a[href^="tel:"]) > span { color: #a4c6d5; }
+.industrial-systems { background-position: center; background-size: cover; }
