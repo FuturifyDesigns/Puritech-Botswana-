@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowUpRight, Check, ChevronDown, Clock, Droplets, Edit3, Facebook, Filter, ImagePlus, Mail, MapPin, Menu, Phone, Plus, Search, Settings2, ShieldCheck, SlidersHorizontal, Trash2, X } from 'lucide-react';
 import { PageSections, serializeSection } from './PageSections';
 import { defaultContent, initialProducts } from './data';
@@ -214,7 +214,7 @@ function App() {
       <section className="section store-new"><div className="container"><div className="section-heading"><div><span className="kicker">MORE TO EXPLORE</span><h2>Browse the range</h2></div><a className="under-link" href="/Puritech-Botswana-/products">View the catalogue <ArrowUpRight size={17}/></a></div><div className="product-grid">{activeProducts.slice(6,12).map(p => <ProductCard key={p.id} product={p} onEnquire={setEnquireProduct} actions={productActions(p)}/>)}</div></div></section>
       <BrandMarquee content={content} isEditor={isEditor} edit={edit}/>
       <section className="section intro-section"><div className="container intro-grid"><div data-reveal><span className="kicker">THE PURITECH APPROACH</span><h2>{content.intro_title}</h2>{isEditor && <EditButton onClick={() => edit(['intro_title','intro_description'], 'Edit introduction')}/>}</div><div data-reveal><p>{content.intro_description}</p><a className="under-link" href="/Puritech-Botswana-/about">Get to know us <ArrowUpRight size={17}/></a></div></div></section>
-      <section className="editorial"><div className="container editorial-inner"><div><span className="kicker">NEED A RECOMMENDATION?</span><h2>Water problems are different.<br/><em>So are the solutions.</em></h2><p>Tell us about your water source, required volume and intended use. We can help you select the equipment.</p><button className="btn btn-white" onClick={() => setEnquireProduct(null)}>Send an enquiry <ArrowUpRight size={17}/></button></div><div className="editorial-art"><div className="art-ring"/><Droplets size={120} strokeWidth={1}/></div></div></section>
+      <section className="editorial"><div className="container editorial-inner"><div><span className="kicker">NEED A RECOMMENDATION?</span><h2>Water problems are different.<br/><em>So are the solutions.</em></h2><p>Tell us about your water source, required volume and intended use. We can help you select the equipment.</p><button className="btn btn-white" onClick={() => setEnquireProduct(null)}>Send an enquiry <ArrowUpRight size={17}/></button></div><RecommendationVideo/></div></section>
     </main>}
     {page === 'offers' && <main className="offers-page"><PageBanner kicker="PURITECH / TOP OFFERS" title={content.offers_title || 'Offers worth exploring.'} description={content.offers_description || 'Current promotions and selected equipment. Ask our team for availability and a current quote.'} image={content.offers_image || pageHero}/><section className="section promos-section"><div className="container"><div className="section-heading"><div><span className="kicker">LATEST PROMOTIONS</span><h2>Current announcements</h2></div>{isEditor && <button className="offer-add" onClick={() => setModal({ kind: 'promotion', item: { ...emptyPromotion, sort_order: promotions.length } })}><Plus size={17}/> Add promotion</button>}</div>{isEditor && <EditButton onClick={() => edit(['offers_title','offers_description','offers_image'], 'Edit offers page', { offers_title: 'Offers worth exploring.', offers_description: 'Current promotions and selected equipment. Ask our team for availability and a current quote.' })}/>}{activePromos.length ? <div className="promo-grid">{activePromos.map(p => <div className="promo-card" key={p.id} style={p.image_url ? { backgroundImage: `linear-gradient(90deg,rgba(4,26,47,.87),rgba(4,26,47,.24)),url("${p.image_url}")` } : {}}><div><span className="kicker">PURITECH BOTSWANA</span><h3>{p.title}</h3><p>{p.subtitle}</p><button className="btn btn-white" onClick={() => setEnquireProduct({ name: p.title })}>{p.cta_label || 'Enquire now'} <ArrowUpRight size={17}/></button></div>{isEditor && <div className="card-edit"><button aria-label={`Edit ${p.title}`} onClick={() => setModal({ kind: 'promotion', item: p })}><Edit3 size={15}/></button><button aria-label={`Delete ${p.title}`} onClick={() => remove('promotion', p)}><Trash2 size={15}/></button></div>}</div>)}</div> : <div className="offers-empty"><h3>New offers are on the way.</h3><p>Explore the current product range or contact our team for a quote.</p><a href="/Puritech-Botswana-/products" className="btn btn-blue">Browse products <ArrowUpRight size={17}/></a></div>}</div></section><section className="section storefront-products"><div className="container"><div className="section-heading"><div><span className="kicker">EXPLORE THE RANGE</span><h2>Featured equipment</h2></div><a className="under-link" href="/Puritech-Botswana-/products">All products <ArrowUpRight size={17}/></a></div><div className="product-grid">{(featured.length ? featured : activeProducts.slice(0,6)).map(p => <ProductCard key={p.id} product={p} onEnquire={setEnquireProduct} actions={productActions(p)}/>)}</div></div></section></main>}
     {page === 'products' && <main><PageBanner kicker="THE PRODUCT RANGE" title={content.products_title || "Find your water solution."} description={content.products_description || "Explore our full equipment range. Need guidance? Send an enquiry and our team will help."} image={pageHero}/>{isEditor && <div className="container page-edit"><EditButton onClick={() => edit(["products_title","products_description"], "Edit products introduction", { products_title: "Find your water solution.", products_description: "Explore our full equipment range. Need guidance? Send an enquiry and our team will help." })}/></div>}<section className="section catalogue"><div className="container"><div className="catalogue-tools"><label className="search-box"><Search size={19}/><input placeholder="Search products" value={search} onChange={e => { setSearch(e.target.value); setVisibleCount(24); }}/></label><label className="select-wrap"><SlidersHorizontal size={18}/><select value={category} onChange={e => { setCategory(e.target.value); setVisibleCount(24); }}>{categories.map(c => <option key={c}>{c}</option>)}</select><ChevronDown size={16}/></label><span className="result-count">{filtered.length} {filtered.length === 1 ? 'product' : 'products'}</span></div><div className="catalogue-layout"><aside className="category-sidebar"><span className="kicker">CATEGORIES</span>{categories.map(c => <button key={c} className={category === c ? 'selected' : ''} onClick={() => { setCategory(c); setVisibleCount(24); }}>{c}<span>{c === 'All products' ? activeProducts.length : activeProducts.filter(p => p.category === c).length}</span></button>)}</aside><div>{filtered.length ? <div className="product-grid catalogue-grid">{filtered.slice(0, visibleCount).map(p => <ProductCard key={p.id} product={p} onEnquire={setEnquireProduct} actions={productActions(p)}/>)}</div> : <div className="empty-state">No products match that search. Try a different category or <button onClick={() => {setSearch('');setCategory('All products');}}>clear filters</button>.</div>}{filtered.length > visibleCount && <div className="load-more"><button className="btn btn-outline-dark" onClick={() => setVisibleCount(count => count + 24)}>Show more products</button><span>Showing {Math.min(visibleCount, filtered.length)} of {filtered.length}</span></div>}</div></div></div></section></main>}
@@ -272,6 +272,33 @@ const aboutBranches = [
     ]
   }
 ];
+
+function RecommendationVideo() {
+  const videoRef = useRef(null);
+  useEffect(() => {
+    const video = videoRef.current;
+    const motion = matchMedia('(prefers-reduced-motion: reduce)');
+    let visible = false;
+    const updatePlayback = () => {
+      if (visible && !motion.matches) video.play().catch(() => {});
+      else video.pause();
+    };
+    const observer = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+      updatePlayback();
+    });
+    observer.observe(video);
+    motion.addEventListener('change', updatePlayback);
+    return () => {
+      observer.disconnect();
+      motion.removeEventListener('change', updatePlayback);
+      video.pause();
+    };
+  }, []);
+  return <video className="recommendation-video" ref={videoRef}
+    src={basePath + 'editorial/water-ripple.mp4'} poster={basePath + 'editorial/water-ripple.webp'}
+    muted loop playsInline preload="none" width="960" height="540" aria-hidden="true"/>;
+}
 
 function AboutPage({ image, content, isEditor, edit, onEnquire }) {
   return <main className="about-page about-redesign">
