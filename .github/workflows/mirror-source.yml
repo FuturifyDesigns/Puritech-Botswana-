@@ -1,0 +1,29 @@
+name: Mirror Puritech source content
+on:
+  push:
+    paths: ['.github/workflows/mirror-source.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --no-audit --no-fund cheerio@1 sanitize-html@2 sharp@0.34
+      - run: node scripts/import-source.mjs
+        env:
+          SUPABASE_PUBLISHABLE_KEY: sb_publishable_Q6CYqtwDRngF4TZXebFZ3g_3DIIl-5Z
+      - name: Commit imported content
+        run: |
+          git config user.name "Futurify Designs Content Import"
+          git config user.email "futurifydesigns@gmail.com"
+          git add src/imported-pages.json src/media-manifest.json public/source-media public/product-images
+          if ! git diff --cached --quiet; then
+            git commit -m "Mirror original Puritech content and optimized media"
+            git push
+          fi
