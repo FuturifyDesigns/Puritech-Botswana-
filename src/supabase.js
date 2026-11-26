@@ -7,10 +7,11 @@ export const supabase = createClient(
 );
 
 export async function uploadImage(file) {
-  if (!file?.type.startsWith('image/')) throw new Error('Choose an image file.');
+  const accepted = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };
+  if (!file || !accepted[file.type]) throw new Error('Choose a JPG, PNG, WebP or GIF image.');
+  if (!file.size) throw new Error('The image file is empty.');
   if (file.size > 10 * 1024 * 1024) throw new Error('Images must be smaller than 10 MB.');
-  const extension = (file.name.split('.').pop() || 'jpg').toLowerCase();
-  const path = `${crypto.randomUUID()}.${extension}`;
+  const path = `${crypto.randomUUID()}.${accepted[file.type]}`;
   const { error } = await supabase.storage.from('site-images').upload(path, file, {
     contentType: file.type, upsert: false
   });
