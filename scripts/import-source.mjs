@@ -109,50 +109,79 @@ try {
 // gallery, SKU and attributes without a WordPress administrator session.
 // Match by the canonical permalink so order changes do not attach the wrong
 // technical details to a catalogue item.
-const details = JSON.parse(await fs.readFile('src/product-details.json', 'utf8'));
-const bySourcePath = new Map(products.filter(p => p.source_url).map(p => {
-  try { return [new URL(p.source_url).pathname.replace(/\/+$/, '').toLowerCase(), p.id]; }
-  catch { return [null, null]; }
-}).filter(([pathname, id]) => pathname && id));
+const detailDir = 'src/product-details';
+const chunkNames = await fs.readdir(detailDir);
+const chunks = new Map();
+for (const file of chunkNames.filter(file => /^[0-9a-f]\.json$/.test(file))) {
+  chunks.set(file[0], JSON.parse(await fs.readFile(path.join(detailDir, file), 'utf8')));
+}
+const bySourcePath = new Map();
+for (const product of products) {
+  if (!/^[0-9a-f-]{36}$/i.test(product.id)) continue;
+  try {
+    const source = new URL(product.source_url);
+    if (source.hostname === 'water.co.bw') {
+      const pathname = source.pathname.replace(/\/+$/, '').toLowerCase();
+      if (pathname.startsWith('/product/')) bySourcePath.set(pathname, product.id);
+    }
+  } catch { /* CMS-only products may have no legacy permalink. */ }
+}
+
 for (let page = 1; page <= 10 && bySourcePath.size; page++) {
   try {
-    const response = await get(`https://water.co.bw/wp-json/wc/store/v1/products?per_page=100&page=${page}`, 1);
+    const response = await get('https://water.co.bw/wp-json/wc/store/v1/products?per_page=100&page=' + page, 1);
     if (!response) break;
     const sourceProducts = await response.json();
     if (!Array.isArray(sourceProducts) || !sourceProducts.length) break;
-    let saved = 0;
     for (const source of sourceProducts) {
       if (!source.permalink) continue;
       const pathname = new URL(source.permalink).pathname.replace(/\/+$/, '').toLowerCase();
       const id = bySourcePath.get(pathname);
       if (!id) continue;
-      const html = sanitizeHtml(source.description || '', {
-        allowedTags: ['h2','h3','h4','p','br','ul','ol','li','strong','b','em','i','a','table','thead','tbody','tr','td','th','blockquote'],
-        allowedAttributes: { a: ['href','title'] },
+      const chunk = chunks.get(id[0].toLowerCase());
+      const previous = chunk[id] || {};
+      const html = sanitizeHtml(source.description || source.short_description || '', {
+        allowedTags: ['h1','h2','h3','h4','h5','h6','p','br','ul','ol','li','strong','b','em','i','a','table','thead','tbody','tr','td','th','blockquote','sup','sub'],
+        allowedAttributes: { a: ['href','title'], td: ['colspan','rowspan'], th: ['colspan','rowspan'] },
         allowedSchemes: ['https','http']
       });
       const images = (source.images || []).map(image => image.src).filter(url => {
-        try { const parsed = new URL(url); return parsed.protocol === 'https:' && allowedHosts.has(parsed.hostname); }
+        try { const parsed = new URL(url); return parsed.protocol === 'https:' && parsed.hostname === 'water.co.bw'; }
         catch { return false; }
       });
       const attributes = (source.attributes || []).map(attribute => [attribute.name, (attribute.terms || []).map(term => term.name).join(', ') || attribute.value || '']).filter(([name, value]) => name && value);
-      details[id] = { html, sku: String(source.sku || ''), images, attributes };
-      saved++;
+      chunk[id] = {
+        html: html || previous.html || '',
+        sku: String(source.sku || previous.sku || ''),
+        images: images.length ? images : previous.images || [],
+        attributes: attributes.length ? attributes : previous.attributes || []
+      };
+      bySourcePath.delete(pathname);
     }
-    await fs.writeFile('src/product-details.json', JSON.stringify(details, null, 2) + '\n');
-    console.log(`Store API page ${page}: ${saved} matching products; total ${Object.keys(details).length}`);
     if (sourceProducts.length < 100) break;
     await sleep(1200);
-  } catch (error) { console.log(`Store API page ${page} unavailable: ${error.message}`); break; }
+  } catch (error) { console.log('Store API page ' + page + ' unavailable: ' + error.message); break; }
 }
+
+const photos = {};
+const imageUrls = new Set();
+for (const [prefix, chunk] of chunks) {
+  await fs.writeFile(path.join(detailDir, prefix + '.json'), JSON.stringify(chunk));
+  for (const [id, detail] of Object.entries(chunk)) {
+    if (detail.images?.[0]) photos[id] = detail.images[0];
+    for (const url of detail.images || []) imageUrls.add(url);
+  }
+}
+await fs.writeFile('src/product-photos.json', JSON.stringify(photos, null, 2) + '\n');
+
 const manifest = JSON.parse(await fs.readFile('src/media-manifest.json', 'utf8'));
-let mirrored = 0;
-for (const product of products) {
+consecutiveFailures = 0;
+for (const url of imageUrls) {
   if (consecutiveFailures >= 10) { console.log('Source is throttling; stopping this batch.'); break; }
-  if (!/^[0-9a-f-]{36}$/i.test(product.id)) continue;
-  const destination = path.join(productMedia, `${product.id}.webp`);
-  const local = await mirror(product.image_url, destination);
-  if (local) { manifest[product.id] = `product-images/${product.id}.webp`; mirrored++; }
+  const id = crypto.createHash('sha256').update(url).digest('hex').slice(0, 20);
+  const filename = id + '.webp';
+  const local = await mirror(url, path.join(productMedia, filename));
+  if (local) manifest[url] = 'product-images/' + path.basename(local);
 }
 await fs.writeFile('src/media-manifest.json', JSON.stringify(manifest, null, 2) + '\n');
-console.log(`Product images ready: ${Object.keys(manifest).length}/${products.length}; downloaded or reused this run: ${mirrored}`);
+console.log('Product images ready: ' + [...imageUrls].filter(url => manifest[url]).length + '/' + imageUrls.size);
