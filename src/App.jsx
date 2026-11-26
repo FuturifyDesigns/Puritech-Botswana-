@@ -5,6 +5,7 @@ import { defaultContent, initialProducts } from './data';
 import { articles, solutionPages } from './pages';
 import importedPages from './imported-pages.json';
 import mediaManifest from './media-manifest.json';
+import productDetails from './product-details.json';
 import { supabase, uploadImage } from './supabase';
 import { logoUrl } from './logo';
 
@@ -203,31 +204,36 @@ function ProductCard({ product, onEnquire, actions }) {
     <div className="product-info"><span className="product-category">{product.category}</span><h3><a href={`#/product/${product.id}`}>{product.name}</a></h3><p>{product.description}</p><div className="product-card-links"><a href={`#/product/${product.id}`}>View details</a><button onClick={() => onEnquire(product)}>Enquire <ArrowUpRight size={17}/></button></div></div>
   </article>;
 }
-function ProductImage({ product, actions, eager = false }) {
-  const mirrored = mediaManifest[product.id];
-  return <div className="product-image">{product.image_url && <img src={mirrored ? `${import.meta.env.BASE_URL}${mirrored}` : product.image_url} alt={product.name} loading={eager ? 'eager' : 'lazy'} decoding="async" fetchPriority={eager ? 'high' : 'auto'} onLoad={e => { e.currentTarget.hidden = false; e.currentTarget.parentNode.classList.remove('no-image'); }} onError={e => {
+function ProductImage({ product, actions, eager = false, imageOverride }) {
+  const mirrored = !imageOverride && mediaManifest[product.id];
+  const source = imageOverride || product.image_url;
+  return <div className="product-image">{source && <img src={mirrored ? `${import.meta.env.BASE_URL}${mirrored}` : source} alt={product.name} loading={eager ? 'eager' : 'lazy'} decoding="async" fetchPriority={eager ? 'high' : 'auto'} onLoad={e => { e.currentTarget.hidden = false; e.currentTarget.parentNode.classList.remove('no-image'); }} onError={e => {
       const image = e.currentTarget;
       image.hidden = true;
       image.parentNode.classList.add('no-image');
       if (mirrored && !image.dataset.sourceFallback) {
         image.dataset.sourceFallback = '1';
-        image.src = product.image_url;
+        image.src = source;
         return;
       }
       if (image.dataset.retried) return;
       image.dataset.retried = '1';
       setTimeout(() => {
         if (!image.isConnected) return;
-        image.src = `${product.image_url}${product.image_url.includes('?') ? '&' : '?'}retry=1`;
+        image.src = `${source}${source.includes('?') ? '&' : '?'}retry=1`;
       }, 12000);
     }}/>}<Droplets className="product-placeholder" size={75} strokeWidth={1}/>{actions}</div>;
 }
 function ProductDetail({ product, related, onEnquire, actions }) {
   const description = product.description?.trim();
+  const full = productDetails[product.id];
+  const gallery = full?.images?.filter(Boolean) || [];
+  const [selectedImage, setSelectedImage] = useState(null);
+  useEffect(() => setSelectedImage(null), [product.id]);
   return <main className="product-detail">
     <div className="container product-breadcrumb"><a href="#/products">Products</a><span>/</span><span>{product.category}</span></div>
-    <section className="container detail-layout"><div className="detail-visual" data-reveal><ProductImage product={product} actions={actions} eager/></div><div className="detail-copy" data-reveal><span className="kicker">{product.category}</span><h1>{product.name}</h1><p className="detail-intro">Explore this product and tell us what you need. Our team can confirm specifications, availability and the best fit for your project.</p><div className="detail-facts"><span><Check size={18}/> Product enquiry</span><span><Check size={18}/> Botswana support</span></div><button className="btn btn-blue" onClick={() => onEnquire(product)}>Enquire about this product <ArrowUpRight size={17}/></button></div></section>
-    <section className="section detail-description"><div className="container detail-description-grid"><div><span className="kicker">PRODUCT INFORMATION</span><h2>About this product.</h2></div><div>{description ? description.split(/\n{2,}/).map((paragraph, index) => <p key={index}>{paragraph}</p>) : <p>Contact our team for this product's specifications and suitability for your water treatment needs.</p>}{product.source_url && <a className="under-link" href={product.source_url} target="_blank" rel="noopener noreferrer">Original product information <ArrowUpRight size={16}/></a>}</div></div></section>
+    <section className="container detail-layout"><div className="detail-visual" data-reveal><ProductImage product={product} actions={actions} imageOverride={selectedImage} eager/>{gallery.length > 1 && <div className="detail-thumbnails">{gallery.slice(0, 8).map((url, index) => <button type="button" key={url} className={(selectedImage || gallery[0]) === url ? 'selected' : ''} onClick={() => setSelectedImage(url)} aria-label={`View product image ${index + 1}`}><img src={url} alt="" loading="lazy" decoding="async"/></button>)}</div>}</div><div className="detail-copy" data-reveal><span className="kicker">{product.category}</span><h1>{product.name}</h1><p className="detail-intro">Explore this product and tell us what you need. Our team can confirm specifications, availability and the best fit for your project.</p>{full?.sku && <p className="product-sku">Reference: {full.sku}</p>}<div className="detail-facts"><span><Check size={18}/> Product enquiry</span><span><Check size={18}/> Botswana support</span></div><button className="btn btn-blue" onClick={() => onEnquire(product)}>Enquire about this product <ArrowUpRight size={17}/></button></div></section>
+    <section className="section detail-description"><div className="container detail-description-grid"><div><span className="kicker">PRODUCT INFORMATION</span><h2>About this product.</h2></div><div>{full?.html ? <div className="imported-content" dangerouslySetInnerHTML={{ __html: full.html }}/> : description ? description.split(/\n{2,}/).map((paragraph, index) => <p key={index}>{paragraph}</p>) : <p>Contact our team for this product's specifications and suitability for your water treatment needs.</p>}{full?.attributes?.length > 0 && <dl className="detail-attributes">{full.attributes.map(([label, values]) => <div key={label}><dt>{label}</dt><dd>{values}</dd></div>)}</dl>}{product.source_url && <a className="under-link" href={product.source_url} target="_blank" rel="noopener noreferrer">Original product information <ArrowUpRight size={16}/></a>}</div></div></section>
     {related.length > 0 && <section className="section related-products"><div className="container"><div className="section-heading"><div><span className="kicker">KEEP EXPLORING</span><h2>More in {product.category}.</h2></div><a href="#/products" className="under-link">All products <ArrowUpRight size={16}/></a></div><div className="product-grid">{related.map(item => <ProductCard key={item.id} product={item} onEnquire={onEnquire}/>)}</div></div></section>}
   </main>;
 }
