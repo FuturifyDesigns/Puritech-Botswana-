@@ -383,8 +383,10 @@
 .footer-contact dt { font-weight: 700; }
 .footer-contact dd { min-width: 0; margin: 0; overflow-wrap: anywhere; }
 
+.footer-contact dd:has(a[href^="tel:"]) { display: grid; gap: 5px; justify-items: start; }
+.footer-contact a[href^="tel:"] { display: inline-flex; align-items: center; min-height: 24px; white-space: nowrap; }
+
 @media (max-width: 800px) {
   .footer-contact > div { grid-template-columns: 1fr; gap: 4px; }
-  .footer-contact dd:has(a[href^="tel:"]) { display: grid; gap: 2px; }
-  .footer-contact a[href^="tel:"] { display: inline-flex; align-items: center; width: fit-content; min-height: 34px; white-space: nowrap; }
+  .footer-contact a[href^="tel:"] { min-height: 44px; }
 }
