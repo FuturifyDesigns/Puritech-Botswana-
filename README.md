@@ -14,7 +14,7 @@ The Supabase URL and publishable key in `src/supabase.js` are public client conf
 ## Activate live editing
 
 1. In Supabase project `azvpkkxbtnbbgpyvzbuw`, run [`supabase/schema.sql`](supabase/schema.sql) in the SQL Editor. This creates content tables, row level security policies, and the image upload bucket.
-2. In Supabase Authentication, create or invite an editor user. Find their UUID under **Authentication → Users**.
+2. In Supabase Authentication, create or invite an editor user. Find their UUID under **Authentication  Users**.
 3. In the SQL Editor, run `insert into public.editors (user_id) values ('EDITOR-USER-UUID');` with the real UUID. Do not make public sign-up an editor path.
 4. Open the website, select **Editor sign in**, and sign in. The live page shows pencil buttons for text and images, plus product and promotion controls. Images and flyers are uploaded as files to Supabase Storage.
 
@@ -22,13 +22,12 @@ The website falls back to selected source products and page copy while the CMS t
 
 ## Catalogue migration status
 
-The original shop reported **499 products** when inspected. The public site rate limited automated access and no WooCommerce export was available. This repository therefore contains a selected starter list drawn from its publicly indexed pages, **not a completed 499-product migration**. The matching product imagery currently used for some cards comes from the Puritech South African catalogue because original image files were inaccessible; replace these with the Botswana originals when an export or media access is available. Products without verified imagery show a neutral placeholder.
+On 26 November 2026, **499 products** from all 34 public shop pages were imported into Supabase with distinct original product URLs and image URLs. The 16 preliminary CMS entries were archived, leaving exactly 499 active products. The catalogue reads from Supabase and shows 24 cards at a time, with search and categories derived from current product data.
 
-For the complete transfer, export **Products → Export** from WooCommerce with all columns and image URLs, and export the WordPress media library or provide working admin access. Reconcile names, descriptions, categories, variants and original image files before importing the full catalogue. Keep `source_url` for traceability.
-
+The public listing supplies a short excerpt for each item, not the full WooCommerce product record. Import the WooCommerce CSV later to reconcile long descriptions, variations, and other metadata. The image URLs currently point to the original WordPress media files; upload those files to Supabase Storage if the old site will be retired. `src/data.js` remains a small offline fallback if Supabase is unavailable.
 ## Publishing
 
-The `.github/workflows/pages.yml` action builds `dist` on each push to `main` and deploys via GitHub Pages. In repository settings, set **Pages → Build and deployment → Source** to **GitHub Actions**. Then rerun the workflow if the first deployment happened before that setting was enabled. The Vite base path is set to `/Puritech-Botswana-/`.
+The `.github/workflows/pages.yml` action builds `dist` on each push to `main` and deploys via GitHub Pages. In repository settings, set **Pages  Build and deployment  Source** to **GitHub Actions**. Then rerun the workflow if the first deployment happened before that setting was enabled. The Vite base path is set to `/Puritech-Botswana-/`.
 
 ## Content and enquiry behavior
 
