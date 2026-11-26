@@ -20,8 +20,10 @@ jobs:
           node-version: 22
       - run: npm install --no-audit --no-fund
       - run: npm run build
-      - name: Serve client routes on refresh
-        run: cp dist/index.html dist/404.html
+      - name: Generate clean route entry points
+        run: node scripts/static-routes.mjs
+        env:
+          SUPABASE_PUBLISHABLE_KEY: sb_publishable_Q6CYqtwDRngF4TZXebFZ3g_3DIIl-5Z
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
