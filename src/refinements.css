@@ -123,3 +123,11 @@
 @media(max-width:560px){.store-main .brand{padding:7px 9px}.store-main .brand-logo{width:150px;max-height:72px}.showcase-grid{grid-template-columns:1fr;gap:12px}.showcase-card{min-height:245px;padding:22px}.showcase-card h3{font-size:30px}.top-inner>span:last-child{gap:5px;font-size:10px}.top-inner>span:last-child a:last-child,.top-inner>span:last-child i{display:none}}
 @media(prefers-reduced-motion:reduce){.showcase-card{transition:none}}
 .extra-guides{background:#f3f8fa}.extra-guides h2{font:800 clamp(30px,4vw,45px)/1.1 Manrope;margin:13px 0 28px}.extra-guides .container>div{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.extra-guides a{display:grid;grid-template-columns:1fr auto;gap:8px;padding:25px;background:#fff;border:1px solid #dbeaf0;transition:transform .2s,box-shadow .2s}.extra-guides a:hover{transform:translateY(-3px);box-shadow:0 15px 28px #0a34451c}.extra-guides a strong{font:800 20px Manrope}.extra-guides a span{grid-row:2;color:#607b87}.extra-guides a svg{grid-column:2;grid-row:1}.imported-section{overflow:hidden}.imported-content{overflow-wrap:anywhere}.imported-content table{display:block;max-width:100%;overflow-x:auto}.imported-content img{max-width:100%;height:auto}@media(max-width:600px){.extra-guides .container>div{grid-template-columns:1fr}}
+/* Keep the supplied mark legible and the hero badge inside narrow viewports. */
+.store-main .brand,.footer-brand{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+.store-main .brand-logo,.footer-brand .brand-logo{display:block;object-fit:contain;object-position:center;width:min(220px,100%);height:auto;max-height:100px}
+.hero-stamp{max-width:calc(100vw - 32px);box-sizing:border-box}
+.hero-stamp span{white-space:normal;overflow-wrap:normal;line-height:1.25}
+.footer-bottom{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px 24px}
+.footer-bottom a{margin-left:0;text-align:left}
+@media(max-width:560px){.store-main .brand-logo{width:145px;max-height:68px}.hero-visual{min-height:390px}.hero-stamp{right:16px;bottom:16px;left:auto;width:max-content;max-width:calc(100% - 32px);padding:10px 12px}.hero-stamp span{font-size:12px}.footer-bottom{align-items:flex-start;flex-direction:column;gap:10px;padding-bottom:25px}.footer-bottom a{text-align:left}}
