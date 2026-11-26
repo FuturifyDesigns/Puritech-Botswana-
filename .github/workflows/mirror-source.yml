@@ -25,7 +25,7 @@ jobs:
         run: |
           git config user.name "Futurify Designs Content Import"
           git config user.email "futurifydesigns@gmail.com"
-          git add src/imported-pages.json src/media-manifest.json
+          git add src/imported-pages.json src/media-manifest.json src/product-details.json
           find public/source-media public/product-images -type f -print0 | xargs -0 -r git add --
           if ! git diff --cached --quiet; then
             git commit -m "Mirror original Puritech content and optimized media"
