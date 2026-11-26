@@ -1,10 +1,13 @@
 name: Mirror Puritech source content
 on:
   push:
-    paths: ['.github/workflows/mirror-source.yml']
+    paths: ['.github/workflows/mirror-source.yml', 'scripts/import-source.mjs']
   workflow_dispatch:
 permissions:
   contents: write
+concurrency:
+  group: puritech-source-import
+  cancel-in-progress: true
 jobs:
   import:
     runs-on: ubuntu-latest
@@ -22,7 +25,8 @@ jobs:
         run: |
           git config user.name "Futurify Designs Content Import"
           git config user.email "futurifydesigns@gmail.com"
-          git add src/imported-pages.json src/media-manifest.json public/source-media public/product-images
+          git add src/imported-pages.json src/media-manifest.json
+          find public/source-media public/product-images -type f -print0 | xargs -0 -r git add --
           if ! git diff --cached --quiet; then
             git commit -m "Mirror original Puritech content and optimized media"
             git push
