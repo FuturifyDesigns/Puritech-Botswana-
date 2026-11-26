@@ -335,7 +335,7 @@ function AboutPage({ image, content, isEditor, edit, onEnquire }) {
       </div>
     </section>
 
-    <section className="about-next">
+    <section className="about-next about-enquiry-banner" style={{ "--about-enquiry-photo": "url(" + basePath + "editorial/about-enquiry.webp)" }}>
       <div className="container">
         <h2>Tell us what you need your water to do.</h2>
         <button className="btn btn-white" onClick={onEnquire}>Start an enquiry <ArrowUpRight size={17}/></button>

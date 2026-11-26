@@ -418,3 +418,15 @@
 @media (max-width: 800px) {
   .recommendation-section::before { background: linear-gradient(90deg, #061f31eb, #061f31ab); }
 }
+
+.about-next.about-enquiry-banner {
+  background-image: linear-gradient(90deg, #061e2ff5 0%, #061e2fd1 43%, #061e2f4f 100%), var(--about-enquiry-photo);
+  background-position: center, center 55%;
+  background-size: cover;
+}
+@media (max-width: 800px) {
+  .about-next.about-enquiry-banner {
+    background-image: linear-gradient(90deg, #061e2fe8, #061e2f94), var(--about-enquiry-photo);
+    background-position: center, 65% center;
+  }
+}
