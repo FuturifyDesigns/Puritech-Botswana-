@@ -19,11 +19,11 @@ export const initialProducts = [
   ['Aqua Care 400GPD Domestic RO System', 'RO Home Use', 'Compact reverse osmosis system for clean drinking water.', photo.home, 'https://water.co.bw/shop/'],
   ['6000 LPH Industrial Reverse Osmosis System', 'RO Industrial', 'High-capacity water treatment for commercial and industrial operations.', photo.industrial, 'https://water.co.bw/shop/'],
   ['500l/h RO System On Skid System', 'RO Industrial', 'Skid-mounted reverse osmosis equipment for larger water needs.', photo.industrial, 'https://water.co.bw/product-category/complete-ro-water-treatment-systems/'],
-  ['Whole House System Grey – Stand Model', 'Filter Housings', 'Multi-stage filtration for water throughout the home.', photo.house, 'https://water.co.bw/shop/'],
-  ['Whole House System Stainless Steel – Stand Model', 'Filter Housings', 'Durable whole-house filtration with a stainless-steel stand.', photo.house, 'https://water.co.bw/'],
+  ['Whole House System Grey - Stand Model', 'Filter Housings', 'Multi-stage filtration for water throughout the home.', photo.house, 'https://water.co.bw/shop/'],
+  ['Whole House System Stainless Steel - Stand Model', 'Filter Housings', 'Durable whole-house filtration with a stainless-steel stand.', photo.house, 'https://water.co.bw/'],
   ['Ultrafiltration Water Purifier Pot UF19', 'Ultrafiltration Systems', 'Compact countertop purification with a hollow-fibre membrane.', '', 'https://water.co.bw/shop/'],
   ['Water Dispenser LRX5-2-178L With Cabinet', 'Water Dispensers', 'Hot and cold water dispenser with cabinet for shared spaces.', '', 'https://water.co.bw/shop/'],
-  ['PureWater 844 FRP Vessel 2.5″', 'FRP Vessels', 'Fibreglass vessel for commercial softening and filtration.', '', 'https://water.co.bw/shop/'],
+  ['PureWater 844 FRP Vessel 2.5?', 'FRP Vessels', 'Fibreglass vessel for commercial softening and filtration.', '', 'https://water.co.bw/shop/'],
   ['AUTO-ADAPTABLE CONTROLLER KG6-1100(S)', 'Pumps', 'Automatic pump control for changing pressure conditions.', '', 'https://water.co.bw/shop/'],
   ['Double Tap Stainless Steel Filling Table', 'Filling Tables', 'Two-tap filling table for water production operations.', '', 'https://water.co.bw/shop/'],
   ['Single Tap Stainless Steel Filling Table', 'Filling Tables', 'Stainless-steel filling station with a single tap.', '', 'https://water.co.bw/shop/'],
@@ -35,7 +35,7 @@ export const initialProducts = [
 }));
 
 export const defaultContent = {
-  hero_eyebrow: 'WATER TREATMENT SPECIALISTS · BOTSWANA',
+  hero_eyebrow: 'WATER TREATMENT SPECIALISTS � BOTSWANA',
   hero_title: 'Better water. Better living.',
   hero_description: 'From the kitchen tap to industrial-scale treatment, find the right water solution with people who know the work.',
   hero_image: photo.industrial,
@@ -43,9 +43,10 @@ export const defaultContent = {
   intro_description: 'Explore reliable systems, components and expert support for homes, businesses and industry across Botswana.',
   about_title: 'Good water is the beginning of everything.',
   about_description: 'SANCTITY (Pty) Ltd trading as Puritech Botswana was established in 2007. We provide expertise in water treatment and purification systems from Gaborone International Commerce Park, representing Puritech for domestic products and Nimbus Water Technologies for larger projects.',
-  contact_title: 'Let’s talk about your water.',
+  contact_title: 'Let's talk about your water.',
   contact_description: 'Tell us what you need and our team will help you find the right solution.',
   contact_email: 'info@water.co.bw',
   contact_phone: '+267 318 7879',
+  contact_phone_secondary: '+267 391 1399',
   contact_address: 'Plot 68, Unit 8, Gaborone International Commerce Park, Botswana'
 };

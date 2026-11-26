@@ -6,6 +6,7 @@ const root = path.resolve('dist');
 const html = await fs.readFile(path.join(root, 'index.html'));
 const routes = new Set([
   'home', 'about', 'contact', 'products', 'solutions', 'ro-range', 'journal', 'offers', 'editor',
+  'steps-for-setting-up-a-water-shop-business', '500lph-ro-system-on-skid',
   ...solutionPages.map(page => page.slug),
   ...articles.map(article => `journal/${article.slug}`)
 ]);
