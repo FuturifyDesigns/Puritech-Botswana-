@@ -64,7 +64,7 @@ function App() {
   const [catalogueLoading, setCatalogueLoading] = useState(true);
 
   useEffect(() => {
-    const onRoute = () => { if (location.hash) return; setPage(routeFromLocation()); setMobileMenu(false); window.scrollTo(0, 0); };
+    const onRoute = () => { setPage(routeFromLocation()); setMobileMenu(false); if (!location.hash) window.scrollTo(0, 0); };
     const onInternalLink = event => {
       const anchor = event.target.closest?.('a[href]');
       if (!anchor || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || anchor.target || anchor.hasAttribute('download')) return;
