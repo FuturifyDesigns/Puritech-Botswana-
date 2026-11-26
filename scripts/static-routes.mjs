@@ -5,7 +5,7 @@ import { articles, solutionPages } from '../src/pages.js';
 const root = path.resolve('dist');
 const html = await fs.readFile(path.join(root, 'index.html'));
 const routes = new Set([
-  'home', 'about', 'contact', 'products', 'solutions', 'ro-range', 'journal', 'editor',
+  'home', 'about', 'contact', 'products', 'solutions', 'ro-range', 'journal', 'offers', 'editor',
   ...solutionPages.map(page => page.slug),
   ...articles.map(article => `journal/${article.slug}`)
 ]);
