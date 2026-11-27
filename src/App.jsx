@@ -240,6 +240,17 @@ function App() {
         {content.contact_phone_secondary && <><span aria-hidden="true">/</span><a href={'tel:' + content.contact_phone_secondary.replace(/\s/g, '')}>{content.contact_phone_secondary}</a></>}
       </dd></div>
     </dl><a className="footer-social" href="https://www.facebook.com/sanctityH20/" target="_blank" rel="noopener noreferrer" aria-label="Puritech Botswana on Facebook"><Facebook size={19} aria-hidden="true"/></a><span>Gaborone, Botswana</span></div></div><div className="container footer-bottom"><small>&copy; {new Date().getFullYear()} Puritech Botswana. All rights reserved.</small><a href="https://futurifydesigns.com/" target="_blank" rel="noopener noreferrer">Built by <strong>Futurify Designs</strong></a></div></footer>
+    <a
+      className="whatsapp-contact"
+      href="https://wa.me/26771300501?text=Hello%20Puritech%20Botswana%2C%20I'd%20like%20to%20learn%20more%20about%20your%20business%20and%20the%20water%20treatment%20products%20you%20offer.%20Could%20you%20please%20share%20more%20information%3F"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Chat with Puritech Botswana on WhatsApp"
+    >
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true">
+        <path d="M12 2a10 10 0 0 0-8.65 15.02L2 22l5.12-1.34A10 10 0 1 0 12 2Zm0 2a8 8 0 1 1-4.21 14.8l-.35-.22-2.62.69.7-2.55-.23-.36A8 8 0 0 1 12 4Zm-3.9 3.7c-.43 0-1.36.53-1.36 1.79 0 1.26.92 2.48 1.05 2.65.12.17 1.81 2.78 4.4 3.89 1.62.7 2.23.68 2.98.56.46-.07 1.51-.62 1.72-1.22.21-.59.21-1.1.15-1.21-.06-.1-.23-.17-.49-.29l-1.74-.83c-.23-.08-.4-.13-.57.13l-.81.99c-.15.17-.3.19-.55.06-.26-.13-1.08-.4-2.05-1.26-.76-.68-1.27-1.52-1.42-1.77-.15-.26-.02-.4.11-.52l.38-.44c.13-.15.17-.26.26-.43.08-.17.04-.32-.02-.45L9.37 8c-.18-.42-.36-.3-.52-.31H8.1Z"/>
+      </svg>
+    </a>
     {notice && <div className="toast" role="status">{notice}</div>}
     {enquireProduct !== undefined && enquireProduct !== null && <div className="modal-backdrop" onMouseDown={() => setEnquireProduct(undefined)}><div className="modal enquiry-modal" onMouseDown={e => e.stopPropagation()}><button className="modal-close" onClick={() => setEnquireProduct(undefined)} aria-label="Close"><X/></button><span className="kicker">REQUEST AN ENQUIRY</span><h2>Let's find the right fit.</h2><EnquiryForm product={enquireProduct} email={content.contact_email}/></div></div>}
     {enquireProduct === null && <div className="modal-backdrop" onMouseDown={() => setEnquireProduct(undefined)}><div className="modal enquiry-modal" onMouseDown={e => e.stopPropagation()}><button className="modal-close" onClick={() => setEnquireProduct(undefined)} aria-label="Close"><X/></button><span className="kicker">REQUEST AN ENQUIRY</span><h2>Let's find the right fit.</h2><EnquiryForm product={null} email={content.contact_email}/></div></div>}

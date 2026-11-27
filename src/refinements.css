@@ -430,3 +430,22 @@
     background-position: center, 65% center;
   }
 }
+
+.whatsapp-contact {
+  position: fixed;
+  z-index: 20;
+  right: calc(16px + env(safe-area-inset-right, 0px));
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #087a42;
+  color: #fff;
+  box-shadow: 0 4px 18px #071f3640;
+}
+
+.whatsapp-contact:hover { background: #056334; }
+.whatsapp-contact:focus-visible { outline: 3px solid #082b44; outline-offset: 3px; }
