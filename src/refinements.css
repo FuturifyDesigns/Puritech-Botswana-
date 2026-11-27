@@ -105,7 +105,11 @@
 .footer-brand .brand-logo{width:210px;height:auto}
 .brand-item img{mix-blend-mode:multiply;max-width:190px;max-height:100px}
 .showcase-section{background:#fff;padding-top:25px}
-.showcase-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.showcase-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:18px}
+.showcase-grid>.showcase-card{grid-column:span 2}
+@media(width > 1150px){.showcase-grid>.showcase-card:nth-child(n+4){grid-column:span 3}}
+@media(560px < width <= 1150px){.showcase-grid>.showcase-card{grid-column:span 1}.showcase-grid>.showcase-card:last-child:nth-child(odd){grid-column:1/-1}}
+@media(max-width:560px){.showcase-grid>.showcase-card{grid-column:1/-1}}
 .showcase-card{min-height:285px;position:relative;display:flex;align-items:center;padding:26px;background-position:center;background-size:cover;border-radius:6px;overflow:hidden;color:#fff;transition:transform .25s,box-shadow .25s}
 .showcase-card:hover{transform:translateY(-5px);box-shadow:0 18px 32px #0b344627}
 .showcase-card>div:first-child{position:relative;z-index:1;max-width:58%}
