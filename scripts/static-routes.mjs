@@ -1,6 +1,7 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { isPublicProduct } from '../src/catalogue-visibility.js';
 import { articles, solutionPages } from '../src/pages.js';
 
 const root = path.resolve('dist');
@@ -32,7 +33,7 @@ try {
     headers: { apikey: process.env.SUPABASE_PUBLISHABLE_KEY }, signal: AbortSignal.timeout(15000)
   });
   if (!response.ok) throw new Error('Catalogue returned ' + response.status);
-  const products = await response.json();
+  const products = (await response.json()).filter(isPublicProduct);
   await fs.writeFile(path.join(root, 'catalogue-snapshot.json'), JSON.stringify(products));
   for (const item of products) {
     if (!/^[0-9a-f-]{36}$/i.test(item.id)) continue;

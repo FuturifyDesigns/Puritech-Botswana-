@@ -17,7 +17,7 @@ import industrialBanner from './promo-media/industrial_ro';
 import pumpBanner from './promo-media/pump';
 import iceBanner from './promo-media/ice';
 import controllerBanner from './promo-media/controller';
-import airBanner from './promo-media/air';
+import { isPublicProduct } from './catalogue-visibility.js';
 import housingBanner from './promo-media/housing';
 
 const emptyProduct = { name: '', category: 'RO Home Use', description: '', image_url: '', source_url: '', featured: false, active: true, sort_order: 0 };
@@ -161,7 +161,7 @@ function App() {
     else setPromotions(previous => previous.filter(p => p.id !== item.id));
     flash('Removed.');
   }
-  const activeProducts = products.filter(p => p.active !== false);
+  const activeProducts = products.filter(isPublicProduct);
   const categoryCounts = activeProducts.reduce((counts, product) => {
     counts[product.category || 'Other equipment'] = (counts[product.category || 'Other equipment'] || 0) + 1;
     return counts;
@@ -356,12 +356,11 @@ const showcaseItems = [
   { label: 'HIGH FLOW', title: 'Water pressure pumps', category: 'Pumps', image: pumpBanner, tone: 'royal' },
   { label: 'COLD & CHILLED', title: 'Ice machines', category: 'Ice Machines', image: iceBanner, tone: 'green' },
   { label: 'PUMP CONTROLLERS', title: 'Adaptive & smart', category: 'Pump Controllers', image: controllerBanner, tone: 'navy' },
-  { label: 'PURE AIR', title: 'Clean & fresh', category: 'Air Coolers', image: airBanner, tone: 'yellow' },
-  { label: 'FILTRATION', title: 'Water filter housings', category: 'Filter Housings', image: housingBanner, tone: 'red' }
+  { label: 'FILTRATION', title: 'Water filter housings', category: 'Filter Housings', image: housingBanner, tone: 'red', contentSlot: 6 }
 ];
 function ShowcaseBanners({ content, isEditor, edit, onChoose }) {
   return <section className="section showcase-section"><div className="container"><div className="section-heading"><div><span className="kicker">EXPLORE THE EQUIPMENT</span><h2>Solutions for every scale.</h2></div></div><div className="showcase-grid">{showcaseItems.map((item, index) => {
-    const key = `showcase_${index + 1}`;
+    const key = `showcase_${item.contentSlot ?? index + 1}`;
     const title = content[`${key}_title`] || item.title;
     return <div className={`showcase-card tone-${item.tone}`} key={key} style={{ backgroundImage: `url("${content[`${key}_image`] || item.image}")` }}><div><span>{content[`${key}_label`] || item.label}</span><h3>{title}</h3><button onClick={() => onChoose(item.category)}>Explore range <ArrowUpRight size={16}/></button></div>{isEditor && <EditButton onClick={() => edit([`${key}_label`,`${key}_title`,`${key}_image`], `Edit ${title}`)}/>}</div>;
   })}</div></div></section>;
