@@ -24,7 +24,11 @@ jobs:
         with:
           node-version: 22
       - run: npm install --no-audit --no-fund
+      - uses: actions/configure-pages@v5
+        id: pages
       - run: npm run build
+        env:
+          PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
       - name: Generate clean route entry points
         run: node scripts/static-routes.mjs
         env:
