@@ -1,3 +1,5 @@
+import { readWordPressArticles } from './wordpress-article-index.js';
+
 // Editorial summaries adapted from the corresponding public pages on water.co.bw.
 // The original URL is retained for technical details and provenance.
 export const solutionPages = [
@@ -119,5 +121,6 @@ export const articles = [
   { slug: 'dmi-65-iron-removal-filter-iron-manganese-arsenic-removal', title: 'DMI-65 iron removal filter', teaser: 'Filtration for iron, manganese and arsenic in water treatment systems.', source: 'https://water.co.bw/dmi-65-iron-removal-filter-iron-manganese-arsenic-removal/', category: 'FILTRATION' },
   { slug: 'water-filter-vs-water-purifier-whats-the-difference', title: 'Water filter vs. water purifier', teaser: 'The difference between filtering water and purifying it.', source: 'https://water.co.bw/water-filter-vs-water-purifier-whats-the-difference/', category: 'WATER QUALITY' },
   { slug: 'what-is-a-water-softener', title: 'What is a water softener?', teaser: 'How ion exchange addresses calcium, magnesium and scale.', source: 'https://water.co.bw/what-is-a-water-softener/', category: 'TREATMENT' },
-  { slug: '5-harmful-effects-of-high-levels-of-iron-in-water', title: 'Five effects of iron in water', teaser: 'A closer look at what elevated iron can affect.', source: 'https://water.co.bw/5-harmful-effects-of-high-levels-of-iron-in-water/', category: 'WATER QUALITY' }
+  { slug: '5-harmful-effects-of-high-levels-of-iron-in-water', title: 'Five effects of iron in water', teaser: 'A closer look at what elevated iron can affect.', source: 'https://water.co.bw/5-harmful-effects-of-high-levels-of-iron-in-water/', category: 'WATER QUALITY' },
+  ...readWordPressArticles()
 ];

@@ -21,7 +21,7 @@ const routes = new Map([
   ['offers', ['Top Offers on Water Treatment Equipment', 'View current Puritech Botswana promotions and enquire about availability.']],
   ['editor', ['Site editor', '', '', true]],
   ['403', ['Editor access required', '', '', true]],
-  ['terms-conditions', ['Legacy Terms and Conditions', 'View the archived Puritech Botswana terms from the previous website.']],
+  ['terms-conditions', ['Terms of Service', 'Read the original Puritech purchase, installation, warranty and return terms and confirm applicability in Botswana.', 'editorial/terms.webp']],
   ['steps-for-setting-up-a-water-shop-business', ['Water Shop Planning Checklist', 'Prepare the water analysis, site details and daily demand needed for a water shop quote.']],
   ['500lph-ro-system-on-skid', ['500 L/h Reverse Osmosis Skid Guide', 'Explore the equipment and specifications for a 500 litre-per-hour reverse osmosis skid.']],
   ...solutionPages.map(page => [page.slug, [page.title, page.lead]]),
